@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Student_Portal.Models;
@@ -33,7 +34,15 @@ public class AccountController : Controller
     {
         if (ModelState.IsValid)
         {
-            var user = new ApplicationUser
+            var user = await _userManager.FindByEmailAsync(model.Email);
+
+            if (user != null)
+            {
+                ModelState.AddModelError(string.Empty, "Email Address already exist.");
+                return View(model);
+            }
+
+            user = new ApplicationUser
             {
                 UserName = model.Email,
                 Email = model.Email,
@@ -50,12 +59,14 @@ public class AccountController : Controller
             {
                 await _userManager.AddToRoleAsync(user, "Student");
 
-                var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                var confirmationLink = Url.Action("ConfirmEmail", "Account",
-                    new { userId = user.Id, token = token }, Request.Scheme);
+                //Mail is not working
 
-                await _emailService.SendEmailAsync(model.Email, "Confirm your email",
-                    $"Please confirm your email by clicking <a href='{confirmationLink}'>here</a>");
+                //var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+                //var confirmationLink = Url.Action("ConfirmEmail", "Account",
+                //    new { userId = user.Id, token = token }, Request.Scheme);
+
+                //await _emailService.SendEmailAsync(model.Email, "Confirm your email",
+                //    $"Please confirm your email by clicking <a href='{confirmationLink}'>here</a>");
 
                 return RedirectToAction("RegisterConfirmation");
             }
@@ -74,7 +85,7 @@ public class AccountController : Controller
     {
         return View(new LoginViewModel());
     }
-    
+
     [HttpPost]
     public async Task<IActionResult> AdminLogin(LoginViewModel model, string returnUrl = null)
     {
@@ -104,7 +115,7 @@ public class AccountController : Controller
             {
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
-                
+
                 return RedirectToAction("Index", "Admin");
             }
 
@@ -120,7 +131,7 @@ public class AccountController : Controller
     {
         return View(new LoginViewModel());
     }
-    
+
     [HttpPost]
     public async Task<IActionResult> StudentLogin(LoginViewModel model, string returnUrl = null)
     {
@@ -154,7 +165,7 @@ public class AccountController : Controller
             {
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
-                
+
                 return RedirectToAction("Index", "Student");
             }
 
@@ -163,7 +174,15 @@ public class AccountController : Controller
 
         return View(model);
     }
-    
+
+    [HttpGet]
+    [AllowAnonymous]
+    public IActionResult RegisterConfirmation()
+    {
+        return View();
+    }
+
+
     [HttpPost]
     public async Task<IActionResult> Logout()
     {

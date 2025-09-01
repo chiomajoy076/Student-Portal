@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Registration Successful";
+}
+
+<div class="container py-4">
+    <div class="alert alert-success" role="alert">
+        <h4 class="alert-heading">Account created successfully</h4>
+        <p>Your account was created successfully. Please contact the Administrator to activate your account.</p>
+        <hr />
+        <p class="mb-0">Once your account is activated, you can sign in.</p>
+    </div>
+
+    <a asp-controller="Account" asp-action="StudentLogin" class="btn btn-primary">Go to Sign in</a>
+    <a asp-controller="Home" asp-action="Index" class="btn btn-secondary ms-2">Return to Home</a>
+</div>
