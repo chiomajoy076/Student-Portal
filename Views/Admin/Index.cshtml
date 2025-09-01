@@ -1,0 +1,40 @@
+@model IEnumerable<Student_Portal.ViewModels.StudentListViewModel>
+@{
+    ViewData["Title"] = "Admin Dashboard";
+    Layout = "_AdminLayout";
+}
+
+<h2>Student Management</h2>
+
+<table class="table">
+    <thead>
+    <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone Number</th>
+        <th>Gender</th>
+        <th>Status</th>
+        <th>Registration Date</th>
+        <th>Form Status</th>
+        <th>Actions</th>
+    </tr>
+    </thead>
+    <tbody>
+    @foreach (var student in Model)
+    {
+        <tr>
+            <td>@student.FullName</td>
+            <td>@student.Email</td>
+            <td>@student.PhoneNumber</td>
+            <td>@student.Gender</td>
+            <td>@(student.IsActive ? "Active" : "Inactive")</td>
+            <td>@student.CreatedAt.ToString("d")</td>
+            <td>@(student.HasSubmittedForm ? "Submitted" : "Pending")</td>
+            <td>
+                <a asp-action="StudentDetails" asp-route-id="@student.Id" 
+                   class="btn btn-info btn-sm">Details</a>
+            </td>
+        </tr>
+    }
+    </tbody>
+</table>
