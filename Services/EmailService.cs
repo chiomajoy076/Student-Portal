@@ -21,14 +21,17 @@ public class EmailService : IEmailService
     {
         var mailMessage = new MailMessage
         {
-            From = new MailAddress(_configuration["Gmail:Username"]),
+            From = new MailAddress("student_portal@noreply.com"),
             Subject = subject,
             Body = message,
             IsBodyHtml = true
         };
         mailMessage.To.Add(email);
 
-        using var client = new SmtpClient("smtp.gmail.com", 587)
+        var host = _configuration["Gmail:Host"];
+        var port = int.Parse(_configuration["Gmail:Port"] ?? "587");
+
+        using var client = new SmtpClient(host, port)
         {
             Credentials = new NetworkCredential(
                 _configuration["Gmail:Username"],
