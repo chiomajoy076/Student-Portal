@@ -1,0 +1,64 @@
+@model Student_Portal.ViewModels.StudentDetailsViewModel
+@{
+    ViewData["Title"] = "Student Details";
+    Layout = "_AdminLayout";
+}
+
+<h2>Student Details</h2>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">@Model.FirstName @Model.MiddleName @Model.LastName</h5>
+        <p class="card-text">
+            <strong>Email:</strong> @Model.Email<br />
+            <strong>PhoneNumber:</strong> @Model.PhoneNumber<br />
+            <strong>Gender:</strong> @Model.Gender<br />
+            <strong>Status:</strong> @(Model.IsActive ? "Active" : "Inactive")
+        </p>
+        
+        <form asp-action="ToggleActivation" method="post">
+            <input type="hidden" name="id" value="@Model.Id" />
+            <button type="submit" class="btn btn-@(Model.IsActive ? "danger" : "success")">
+                @(Model.IsActive ? "Deactivate" : "Activate") Account
+            </button>
+        </form>
+    </div>
+</div>
+
+@if (Model.Form != null)
+{
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5 class="card-title">Form Details</h5>
+            <p class="card-text">
+                <strong>Matric Number:</strong> @Model.Form.MatricNumber<br />
+                <strong>Department:</strong> @Model.Form.Department<br />
+                <strong>Level:</strong> @Model.Form.Level<br />
+                <strong>Jamb Registration Number:</strong> @Model.Form.JambRegNumber<br />
+                <strong>WAEC Registration Number:</strong> @Model.Form.WAECRegNumber<br />
+                <strong>Mode Of Entry:</strong> @Model.Form.ModeOfEntry<br />
+                <strong>PostUtme Score:</strong> @Model.Form.PostUtmeScore<br />
+                <strong>Marital Status:</strong> @Model.Form.MaritalStatus<br />
+                <strong>Date Of Birth:</strong> @Model.Form.DateOfBirth.ToString("g")<br />
+                <strong>Nationality:</strong> @Model.Form.Nationality<br />
+                <strong>State:</strong> @Model.Form.State<br />
+                <strong>Local Government:</strong> @Model.Form.LocalGov<br />
+                <strong>Next Of Kin:</strong> @Model.Form.NextOfKin<br />
+                <strong>Next Of Kin Phone Number:</strong> @Model.Form.NextOfKinPhoneNumber<br />
+                <strong>Last Updated:</strong> @Model.Form.LastUpdated.ToString("g")<br />
+                <strong>Status:</strong> @(Model.Form.IsSubmitted ? "Submitted" : "Draft")
+            </p>
+           
+            @if (!string.IsNullOrEmpty(Model.Form.UploadedDocumentBase64))
+            {
+                <div class="mt-3">
+                    <h6><strong>Uploaded Document</strong></h6>
+                    <a href="data:application/pdf;base64,@Model.Form.UploadedDocumentBase64"
+                       target="_blank" class="btn btn-sm btn-primary">
+                        View Document
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+}

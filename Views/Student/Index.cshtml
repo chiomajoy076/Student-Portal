@@ -1,0 +1,90 @@
+@model Student_Portal.ViewModels.StudentFormViewModel
+@{
+    ViewData["Title"] = "My Form Status";
+}
+
+<div class="container">
+    <h2>My Form Status</h2>
+
+    @if (Model.IsSubmitted)
+    {
+        <div class="alert alert-success">
+            <h4>Form Submitted Successfully</h4>
+            <p>Submitted on: @Model.SubmittedAt?.ToString("MMMM dd, yyyy HH:mm")</p>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-body">
+                <h5 class="card-title">Form Details</h5>
+                <dl class="row">
+                    <dt class="col-sm-3">Matric Number</dt>
+                    <dd class="col-sm-9">@Model.MatricNumber</dd>
+
+                    <dt class="col-sm-3">Department</dt>
+                    <dd class="col-sm-9">@Model.Department</dd>
+
+                    <dt class="col-sm-3">Level</dt>
+                    <dd class="col-sm-9">@Model.Level</dd>
+
+                    <dt class="col-sm-3">Jamb Registration Number</dt>
+                    <dd class="col-sm-9">@Model.JambRegNumber</dd>
+
+                    <dt class="col-sm-3">WAEC Registration Number</dt>
+                    <dd class="col-sm-9">@Model.WAECRegNumber</dd>
+
+                    <dt class="col-sm-3">Mode of Entry</dt>
+                    <dd class="col-sm-9">@Model.ModeOfEntry</dd>
+
+                    <dt class="col-sm-3">Jamb Score</dt>
+                    <dd class="col-sm-9">@Model.JambScore</dd>
+
+                    <dt class="col-sm-3">Post Utme Score</dt>
+                    <dd class="col-sm-9">@Model.PostUtmeScore</dd>
+
+                    <dt class="col-sm-3">Marital Status</dt>
+                    <dd class="col-sm-9">@Model.MaritalStatus</dd>
+
+                    <dt class="col-sm-3">Date of Birth</dt>
+                    <dd class="col-sm-9">@Model.DateOfBirth</dd>
+
+                    <dt class="col-sm-3">Nationality</dt>
+                    <dd class="col-sm-9">@Model.Nationality</dd>
+
+                    <dt class="col-sm-3">State</dt>
+                    <dd class="col-sm-9">@Model.State</dd>
+
+                    <dt class="col-sm-3">Local Government Area</dt>
+                    <dd class="col-sm-9">@Model.LocalGov</dd>
+
+                    <dt class="col-sm-3">Next of Kin</dt>
+                    <dd class="col-sm-9">@Model.NextOfKin</dd>
+
+                    <dt class="col-sm-3">Next of Kin Phone Number</dt>
+                    <dd class="col-sm-9">@Model.NextOfKinPhoneNumber</dd>
+
+                    @if (!string.IsNullOrEmpty(Model.UploadedDocumentBase64))
+                    {
+                        <dt class="col-sm-3">Uploaded Document</dt>
+                        <dd class="col-sm-9">
+                            <a href="data:application/pdf;base64,@Model.UploadedDocumentBase64" 
+                               target="_blank" class="btn btn-sm btn-primary">
+                                View Document
+                            </a>
+                        </dd>
+                    }
+
+                    <dt class="col-sm-3">Last Updated</dt>
+                    <dd class="col-sm-9">@Model.LastUpdated.ToString("MMMM dd, yyyy HH:mm")</dd>
+                </dl>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            <h4>Form in Progress</h4>
+            <p>Last saved: @Model.LastUpdated.ToString("MMMM dd, yyyy HH:mm")</p>
+            <a asp-action="Form" class="btn btn-primary">Continue Editing</a>
+        </div>
+    }
+</div>

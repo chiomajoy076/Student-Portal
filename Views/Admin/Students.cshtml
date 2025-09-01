@@ -1,0 +1,137 @@
+@model Student_Portal.ViewModels.StudentFormViewModel
+@{
+    ViewData["Title"] = "Student Form";
+}
+
+<h2>Student Form</h2>
+
+<form asp-action="Form" method="post" enctype="multipart/form-data">
+    <input type="hidden" asp-for="Id" />
+    
+    <div class="form-group">
+        <label asp-for="MatricNumber">Matric Number</label>
+        <input asp-for="MatricNumber" class="form-control" />
+        <span asp-validation-for="MatricNumber" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Department">Department</label>
+        <input asp-for="Department" class="form-control" />
+        <span asp-validation-for="Department" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="Level">Level</label>
+        <input asp-for="Level" class="form-control" />
+        <span asp-validation-for="Level" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="JambRegNumber">Jamb Registration Number</label>
+        <input asp-for="JambRegNumber" class="form-control" />
+        <span asp-validation-for="JambRegNumber" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="WAECRegNumber">WAEC Registration Number</label>
+        <input asp-for="WAECRegNumber" class="form-control" />
+        <span asp-validation-for="WAECRegNumber" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="ModeOfEntry">Mode of Entry</label>
+        <select asp-for="ModeOfEntry" class="form-control" asp-items="Html.GetEnumSelectList<ModeOfEntry>()">
+            <option value="">-- Select Mode of Entry --</option>
+        </select>
+        <span asp-validation-for="ModeOfEntry" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="MaritalStatus">Marital Status</label>
+        <select asp-for="MaritalStatus" class="form-control" asp-items="Html.GetEnumSelectList<MaritalStatus>()">
+            <option value="">-- Select Marital Status --</option>
+        </select>
+        <span asp-validation-for="MaritalStatus" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="PostUtmeScore">Post Utme Score</label>
+        <input asp-for="PostUtmeScore" class="form-control" />
+        <span asp-validation-for="PostUtmeScore" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="JambScore">Jamb Score</label>
+        <input asp-for="JambScore" class="form-control" />
+        <span asp-validation-for="JambScore" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="DateOfBirth"></label>
+        <input asp-for="DateOfBirth"
+               class="form-control"
+               type="date"
+               min="1960-01-01"
+               max="@DateTime.Now.AddYears(-15).ToString("yyyy-MM-dd")" />
+        <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+    </div>
+
+
+    <div class="form-group">
+        <label asp-for="Nationality">Nationality</label>
+        <select asp-for="Nationality" class="form-control">
+            <option value="">Select Nationality</option>
+            <option value="Nigeria">Nigeria</option>
+        </select>
+        <span asp-validation-for="Nationality" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="State">State</label>
+        <input asp-for="State" class="form-control" />
+        <span asp-validation-for="State" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="LocalGov">Local Government</label>
+        <input asp-for="LocalGov" class="form-control" />
+        <span asp-validation-for="LocalGov" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="NextOfKin">Next of Kin</label>
+        <input asp-for="NextOfKin" class="form-control" />
+        <span asp-validation-for="NextOfKin" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label asp-for="NextOfKinPhoneNumber">Next of Kin Phone Number</label>
+        <input asp-for="NextOfKinPhoneNumber" class="form-control" />
+        <span asp-validation-for="NextOfKinPhoneNumber" class="text-danger"></span>
+    </div>
+
+    <div class="form-group">
+        <label>Upload Document</label>
+        <input type="file" name="document" class="form-control-file" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.UploadedDocumentBase64))
+    {
+        <div class="mt-3">
+            <h6>Current Document</h6>
+            <img src="data:image/png;base64,@Model.UploadedDocumentBase64" 
+                 class="img-fluid" alt="Uploaded Document" />
+        </div>
+    }
+
+    <div class="form-group mt-3">
+        <div class="custom-control custom-checkbox">
+            <input type="checkbox" class="custom-control-input" asp-for="IsSubmitted" />
+            <label class="custom-control-label" asp-for="IsSubmitted">Submit Form</label>
+        </div>
+    </div>
+
+    <button type="submit" class="btn btn-primary mt-3">
+        @(Model.IsSubmitted ? "Update" : "Save")
+    </button>
+</form>
