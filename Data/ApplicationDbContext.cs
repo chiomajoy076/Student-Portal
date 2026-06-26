@@ -15,6 +15,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Document> Documents { get; set; }
     public DbSet<Course> Courses { get; set; }
     public DbSet<Result> Results { get; set; }
+    public DbSet<GpaRecord> GpaRecords { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -51,5 +52,23 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Result>()
             .HasIndex(r => new { r.UserId, r.CourseId })
             .IsUnique();
+
+        builder.Entity<GpaRecord>()
+            .HasOne(g => g.User)
+            .WithMany()
+            .HasForeignKey(g => g.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<GpaRecord>()
+            .HasIndex(g => new { g.UserId, g.Session, g.Semester })
+            .IsUnique();
+
+        builder.Entity<GpaRecord>()
+            .Property(g => g.GPA)
+            .HasColumnType("decimal(4,2)");
+
+        builder.Entity<GpaRecord>()
+            .Property(g => g.CGPA)
+            .HasColumnType("decimal(4,2)");
     }
 }

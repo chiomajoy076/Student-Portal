@@ -11,13 +11,15 @@ public class ResultService : IResultService
     private readonly IResultRepository _resultRepository;
     private readonly ICourseRepository _courseRepository;
     private readonly IStudentRepository _studentRepository;
+    private readonly IGpaService _gpaService;
 
     public ResultService(IResultRepository resultRepository, ICourseRepository courseRepository,
-        IStudentRepository studentRepository)
+        IStudentRepository studentRepository, IGpaService gpaService)
     {
         _resultRepository = resultRepository;
         _courseRepository = courseRepository;
         _studentRepository = studentRepository;
+        _gpaService = gpaService;
     }
 
     public async Task<ServiceResult> UploadSingleResultAsync(ResultUploadViewModel model)
@@ -51,6 +53,8 @@ public class ResultService : IResultService
         await _resultRepository.AddAsync(result);
         await _resultRepository.SaveChangesAsync();
 
+        await _gpaService.RecalculateForStudentAsync(student.UserId);
+
         return ServiceResult.Success();
     }
 
@@ -74,6 +78,7 @@ public class ResultService : IResultService
 
         summary.TotalRows = rows.Count;
         var seenInBatch = new HashSet<(string UserId, int CourseId)>();
+        var affectedUserIds = new HashSet<string>();
 
         for (var i = 0; i < rows.Count; i++)
         {
@@ -122,10 +127,17 @@ public class ResultService : IResultService
                 UploadedAt = DateTime.UtcNow
             });
 
+            affectedUserIds.Add(student.UserId);
             summary.SuccessCount++;
         }
 
         await _resultRepository.SaveChangesAsync();
+
+        foreach (var userId in affectedUserIds)
+        {
+            await _gpaService.RecalculateForStudentAsync(userId);
+        }
+
         return summary;
     }
 }
