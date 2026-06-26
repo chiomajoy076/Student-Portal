@@ -13,6 +13,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<StudentForm> StudentForms { get; set; }
     public DbSet<Document> Documents { get; set; }
+    public DbSet<Course> Courses { get; set; }
+    public DbSet<Result> Results { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -29,5 +31,25 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Course>()
+            .HasIndex(c => new { c.CourseCode, c.Session, c.Semester })
+            .IsUnique();
+
+        builder.Entity<Result>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Result>()
+            .HasOne(r => r.Course)
+            .WithMany()
+            .HasForeignKey(r => r.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<Result>()
+            .HasIndex(r => new { r.UserId, r.CourseId })
+            .IsUnique();
     }
 }

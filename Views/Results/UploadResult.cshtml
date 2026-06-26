@@ -1,0 +1,43 @@
+@model Student_Portal.ViewModels.ResultUploadViewModel
+@using Student_Portal.ViewModels
+@{
+    ViewData["Title"] = "Upload Result";
+    Layout = "_AdminLayout";
+    var courses = ViewBag.Courses as List<CourseViewModel> ?? new List<CourseViewModel>();
+}
+
+<h2>Upload Result</h2>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form asp-action="UploadResult" method="post" class="row g-3">
+    <div class="col-md-4">
+        <label asp-for="MatricNumber"></label>
+        <input asp-for="MatricNumber" class="form-control" />
+        <span asp-validation-for="MatricNumber" class="text-danger"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="CourseId">Course</label>
+        <select asp-for="CourseId" class="form-control">
+            <option value="">-- Select Course --</option>
+            @foreach (var course in courses)
+            {
+                <option value="@course.Id">@course.CourseCode - @course.CourseTitle (@course.Session, @course.Semester)</option>
+            }
+        </select>
+        <span asp-validation-for="CourseId" class="text-danger"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Score"></label>
+        <input asp-for="Score" type="number" class="form-control" />
+        <span asp-validation-for="Score" class="text-danger"></span>
+    </div>
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary mt-2">Upload Result</button>
+        <a asp-action="ImportResults" class="btn btn-secondary mt-2">Bulk Import (CSV)</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

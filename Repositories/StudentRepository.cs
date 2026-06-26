@@ -16,6 +16,9 @@ public class StudentRepository : IStudentRepository
     public Task<StudentForm?> GetByUserIdAsync(string userId) =>
         _context.StudentForms.FirstOrDefaultAsync(f => f.UserId == userId);
 
+    public Task<StudentForm?> GetByMatricNumberAsync(string matricNumber) =>
+        _context.StudentForms.FirstOrDefaultAsync(f => f.MatricNumber == matricNumber);
+
     public Task<List<StudentForm>> GetAllAsync() => _context.StudentForms.ToListAsync();
 
     public async Task AddAsync(StudentForm form)

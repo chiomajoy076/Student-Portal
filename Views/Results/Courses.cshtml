@@ -1,0 +1,72 @@
+@model List<Student_Portal.ViewModels.CourseViewModel>
+@using Student_Portal.Models
+@{
+    ViewData["Title"] = "Courses";
+    Layout = "_AdminLayout";
+}
+
+<h2>Courses</h2>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Add Course</h5>
+        <form asp-action="AddCourse" method="post" class="row g-3">
+            <div class="col-md-2">
+                <label>Course Code</label>
+                <input name="CourseCode" class="form-control" required />
+            </div>
+            <div class="col-md-3">
+                <label>Course Title</label>
+                <input name="CourseTitle" class="form-control" required />
+            </div>
+            <div class="col-md-1">
+                <label>Units</label>
+                <input name="CreditUnit" type="number" class="form-control" required />
+            </div>
+            <div class="col-md-2">
+                <label>Semester</label>
+                <select name="Semester" class="form-control" required>
+                    <option value="First">First</option>
+                    <option value="Second">Second</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>Session</label>
+                <input name="Session" class="form-control" placeholder="2024/2025" required />
+            </div>
+            <div class="col-md-2">
+                <label>Department</label>
+                <input name="Department" class="form-control" required />
+            </div>
+            <div class="col-12">
+                <button type="submit" class="btn btn-primary mt-2">Add Course</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Title</th>
+            <th>Units</th>
+            <th>Semester</th>
+            <th>Session</th>
+            <th>Department</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var course in Model)
+        {
+            <tr>
+                <td>@course.CourseCode</td>
+                <td>@course.CourseTitle</td>
+                <td>@course.CreditUnit</td>
+                <td>@course.Semester</td>
+                <td>@course.Session</td>
+                <td>@course.Department</td>
+            </tr>
+        }
+    </tbody>
+</table>
