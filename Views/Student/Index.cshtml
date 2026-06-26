@@ -62,13 +62,12 @@
                     <dt class="col-sm-3">Next of Kin Phone Number</dt>
                     <dd class="col-sm-9">@Model.NextOfKinPhoneNumber</dd>
 
-                    @if (!string.IsNullOrEmpty(Model.UploadedDocumentBase64))
+                    @if (!string.IsNullOrEmpty(Model.DocumentUrl))
                     {
                         <dt class="col-sm-3">Uploaded Document</dt>
                         <dd class="col-sm-9">
-                            <a href="data:application/pdf;base64,@Model.UploadedDocumentBase64" 
-                               target="_blank" class="btn btn-sm btn-primary">
-                                View Document
+                            <a href="@Model.DocumentUrl" target="_blank" class="btn btn-sm btn-primary">
+                                View Document (@Model.DocumentFileName)
                             </a>
                         </dd>
                     }

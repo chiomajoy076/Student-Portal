@@ -49,15 +49,31 @@ public class StudentController : Controller
             return View(model);
         }
 
-        var result = await _studentService.SaveFormAsync(User, model, document);
+        if (document != null)
+        {
+            var uploadResult = await _studentService.UploadDocumentAsync(User, document);
+            if (!uploadResult.Succeeded)
+            {
+                foreach (var error in uploadResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error);
+                }
+
+                return View(model);
+            }
+        }
+
+        var result = await _studentService.SaveFormAsync(User, model);
         if (!result.Succeeded)
         {
             return RedirectToAction(nameof(Index));
         }
 
-        TempData["Success"] = model.IsSubmitted
-            ? "Your form has been submitted successfully."
-            : "Your form has been saved.";
+        TempData["Success"] = document != null
+            ? "Document uploaded and form saved successfully."
+            : model.IsSubmitted
+                ? "Your form has been submitted successfully."
+                : "Your form has been saved.";
 
         return RedirectToAction(nameof(Index));
     }

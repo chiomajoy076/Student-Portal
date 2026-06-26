@@ -18,7 +18,8 @@ public class StudentFormViewModel
     public string Level { get; set; }
     
     public string? ProfileImageBase64 { get; set; }
-    public string? UploadedDocumentBase64 { get; set; }
+    public string? DocumentFileName { get; set; }
+    public string? DocumentUrl { get; set; }
     public bool IsSubmitted { get; set; }
     public DateTime LastUpdated { get; set; }
     

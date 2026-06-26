@@ -9,32 +9,41 @@ public class StudentService : IStudentService
 {
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
+    private readonly IDocumentService _documentService;
 
-    public StudentService(IUserRepository userRepository, IStudentRepository studentRepository)
+    public StudentService(IUserRepository userRepository, IStudentRepository studentRepository,
+        IDocumentService documentService)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
+        _documentService = documentService;
     }
 
     public async Task<StudentFormStatus> GetFormStatusAsync(ClaimsPrincipal principal)
     {
         var user = await _userRepository.GetUserAsync(principal);
         var form = await _studentRepository.GetByUserIdAsync(user!.Id);
+        var document = await _documentService.GetLatestDocumentAsync(user.Id);
 
         if (form == null)
         {
-            return new StudentFormStatus { Exists = false, IsSubmitted = false, Form = null };
+            return new StudentFormStatus
+            {
+                Exists = false,
+                IsSubmitted = false,
+                Form = ApplyDocument(new StudentFormViewModel(), document)
+            };
         }
 
         return new StudentFormStatus
         {
             Exists = true,
             IsSubmitted = form.IsSubmitted,
-            Form = ToViewModel(form)
+            Form = ApplyDocument(ToViewModel(form), document)
         };
     }
 
-    public async Task<ServiceResult> SaveFormAsync(ClaimsPrincipal principal, StudentFormViewModel model, IFormFile? document)
+    public async Task<ServiceResult> SaveFormAsync(ClaimsPrincipal principal, StudentFormViewModel model)
     {
         var user = await _userRepository.GetUserAsync(principal);
         var form = await _studentRepository.GetByUserIdAsync(user!.Id);
@@ -44,39 +53,32 @@ public class StudentService : IStudentService
             return ServiceResult.Fail("Form has already been submitted.");
         }
 
-        if (document != null)
-        {
-            using var ms = new MemoryStream();
-            await document.CopyToAsync(ms);
-            model.UploadedDocumentBase64 = Convert.ToBase64String(ms.ToArray());
-        }
-
         if (form == null)
         {
             form = new StudentForm { UserId = user.Id };
-            ApplyToEntity(form, model, isNew: true);
+            ApplyToEntity(form, model);
             await _studentRepository.AddAsync(form);
         }
         else
         {
-            ApplyToEntity(form, model, isNew: false);
+            ApplyToEntity(form, model);
         }
 
         await _studentRepository.SaveChangesAsync();
         return ServiceResult.Success();
     }
 
-    private static void ApplyToEntity(StudentForm form, StudentFormViewModel model, bool isNew)
+    public async Task<ServiceResult> UploadDocumentAsync(ClaimsPrincipal principal, IFormFile file)
+    {
+        var user = await _userRepository.GetUserAsync(principal);
+        return await _documentService.UploadAsync(user!.Id, file);
+    }
+
+    private static void ApplyToEntity(StudentForm form, StudentFormViewModel model)
     {
         form.MatricNumber = model.MatricNumber;
         form.Department = model.Department;
         form.Level = model.Level;
-
-        if (isNew || model.UploadedDocumentBase64 != null)
-        {
-            form.UploadedDocument = model.UploadedDocumentBase64;
-        }
-
         form.IsSubmitted = model.IsSubmitted;
         form.LastUpdated = DateTime.UtcNow;
         form.SubmittedAt = model.IsSubmitted ? DateTime.UtcNow : null;
@@ -94,13 +96,23 @@ public class StudentService : IStudentService
         form.WAECRegNumber = model.WAECRegNumber;
     }
 
+    private static StudentFormViewModel ApplyDocument(StudentFormViewModel viewModel, DocumentViewModel? document)
+    {
+        if (document != null)
+        {
+            viewModel.DocumentFileName = document.FileName;
+            viewModel.DocumentUrl = document.Url;
+        }
+
+        return viewModel;
+    }
+
     private static StudentFormViewModel ToViewModel(StudentForm form) => new()
     {
         Id = form.Id,
         MatricNumber = form.MatricNumber,
         Department = form.Department,
         Level = form.Level,
-        UploadedDocumentBase64 = form.UploadedDocument,
         IsSubmitted = form.IsSubmitted,
         LastUpdated = form.LastUpdated,
         SubmittedAt = form.SubmittedAt,

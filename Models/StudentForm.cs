@@ -20,7 +20,6 @@ public class StudentForm
     public string MatricNumber { get; set; }
     public string Department { get; set; }
     public string Level { get; set; }
-    public string? UploadedDocument { get; set; } // Base64 document
     public bool IsSubmitted { get; set; }
     public DateTime LastUpdated { get; set; }
     public DateTime? SubmittedAt { get; set; }

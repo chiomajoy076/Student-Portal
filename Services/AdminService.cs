@@ -7,11 +7,14 @@ public class AdminService : IAdminService
 {
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
+    private readonly IDocumentService _documentService;
 
-    public AdminService(IUserRepository userRepository, IStudentRepository studentRepository)
+    public AdminService(IUserRepository userRepository, IStudentRepository studentRepository,
+        IDocumentService documentService)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
+        _documentService = documentService;
     }
 
     public async Task<IEnumerable<StudentListViewModel>> GetStudentListAsync()
@@ -41,6 +44,7 @@ public class AdminService : IAdminService
         }
 
         var form = await _studentRepository.GetByUserIdAsync(id);
+        var document = await _documentService.GetLatestDocumentAsync(id);
 
         return new StudentDetailsViewModel
         {
@@ -58,7 +62,8 @@ public class AdminService : IAdminService
                 MatricNumber = form.MatricNumber,
                 Department = form.Department,
                 Level = form.Level,
-                UploadedDocumentBase64 = form.UploadedDocument,
+                DocumentFileName = document?.FileName,
+                DocumentUrl = document?.Url,
                 IsSubmitted = form.IsSubmitted,
                 LastUpdated = form.LastUpdated,
                 DateOfBirth = form.DateOfBirth,

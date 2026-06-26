@@ -16,7 +16,6 @@
 
     <form method="post" enctype="multipart/form-data">
         <input type="hidden" asp-for="Id" />
-        <input type="hidden" asp-for="UploadedDocumentBase64" />
         
         <div class="form-group">
             <label asp-for="MatricNumber"></label>
@@ -127,13 +126,13 @@
 
         <div class="form-group">
             <label>Upload Document</label>
-            <input type="file" name="document" class="form-control" accept=".pdf,.doc,.docx" />
-            @if (!string.IsNullOrEmpty(Model.UploadedDocumentBase64))
+            <input type="file" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png" />
+            <small class="form-text text-muted">PDF, JPG, or PNG. Max size 5MB.</small>
+            @if (!string.IsNullOrEmpty(Model.DocumentUrl))
             {
                 <div class="mt-2">
-                    <a href="data:application/pdf;base64,@Model.UploadedDocumentBase64" 
-                       target="_blank" class="btn btn-sm btn-info">
-                        View Current Document
+                    <a href="@Model.DocumentUrl" target="_blank" class="btn btn-sm btn-info">
+                        View Current Document (@Model.DocumentFileName)
                     </a>
                 </div>
             }
@@ -150,7 +149,7 @@
 
         <div class="form-group mt-4">
             <button type="submit" class="btn btn-primary">Save</button>
-            @if (!string.IsNullOrEmpty(Model.UploadedDocumentBase64))
+            @if (!string.IsNullOrEmpty(Model.DocumentUrl))
             {
                 <button type="submit" name="IsSubmitted" value="true" class="btn btn-success">
                     Submit Form

@@ -49,13 +49,12 @@
                 <strong>Status:</strong> @(Model.Form.IsSubmitted ? "Submitted" : "Draft")
             </p>
            
-            @if (!string.IsNullOrEmpty(Model.Form.UploadedDocumentBase64))
+            @if (!string.IsNullOrEmpty(Model.Form.DocumentUrl))
             {
                 <div class="mt-3">
                     <h6><strong>Uploaded Document</strong></h6>
-                    <a href="data:application/pdf;base64,@Model.Form.UploadedDocumentBase64"
-                       target="_blank" class="btn btn-sm btn-primary">
-                        View Document
+                    <a href="@Model.Form.DocumentUrl" target="_blank" class="btn btn-sm btn-primary">
+                        View Document (@Model.Form.DocumentFileName)
                     </a>
                 </div>
             }

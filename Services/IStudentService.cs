@@ -13,5 +13,6 @@ public class StudentFormStatus
 public interface IStudentService
 {
     Task<StudentFormStatus> GetFormStatusAsync(ClaimsPrincipal principal);
-    Task<ServiceResult> SaveFormAsync(ClaimsPrincipal principal, StudentFormViewModel model, IFormFile? document);
+    Task<ServiceResult> SaveFormAsync(ClaimsPrincipal principal, StudentFormViewModel model);
+    Task<ServiceResult> UploadDocumentAsync(ClaimsPrincipal principal, IFormFile file);
 }

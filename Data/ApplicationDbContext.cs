@@ -12,15 +12,22 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     }
 
     public DbSet<StudentForm> StudentForms { get; set; }
+    public DbSet<Document> Documents { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        
+
         builder.Entity<StudentForm>()
             .HasOne(sf => sf.User)
             .WithMany()
             .HasForeignKey(sf => sf.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<Document>()
+            .HasOne(d => d.User)
+            .WithMany()
+            .HasForeignKey(d => d.UserId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
