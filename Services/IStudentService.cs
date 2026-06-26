@@ -18,4 +18,5 @@ public interface IStudentService
     Task<ServiceResult> UploadDocumentAsync(ClaimsPrincipal principal, IFormFile file);
     Task<List<AcademicPeriod>> GetAvailableResultPeriodsAsync(ClaimsPrincipal principal);
     Task<ResultCheckViewModel?> GetResultAsync(ClaimsPrincipal principal, string session, Semester semester);
+    Task<byte[]?> GetRegistrationSlipAsync(ClaimsPrincipal principal);
 }

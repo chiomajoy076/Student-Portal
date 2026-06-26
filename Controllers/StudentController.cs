@@ -98,4 +98,17 @@ public class StudentController : Controller
 
         return View(result);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> DownloadRegistrationSlip()
+    {
+        var pdfBytes = await _studentService.GetRegistrationSlipAsync(User);
+        if (pdfBytes == null)
+        {
+            TempData["Error"] = "Registration slip is only available after your form is submitted and your account is approved.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return File(pdfBytes, "application/pdf", "RegistrationSlip.pdf");
+    }
 }

@@ -12,6 +12,7 @@
         <div class="alert alert-success">
             <h4>Form Submitted Successfully</h4>
             <p>Submitted on: @Model.SubmittedAt?.ToString("MMMM dd, yyyy HH:mm")</p>
+            <a asp-action="DownloadRegistrationSlip" class="btn btn-sm btn-success">Download Registration Slip</a>
         </div>
 
         <div class="card mt-4">

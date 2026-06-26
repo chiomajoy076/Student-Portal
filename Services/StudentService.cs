@@ -11,14 +11,17 @@ public class StudentService : IStudentService
     private readonly IStudentRepository _studentRepository;
     private readonly IDocumentService _documentService;
     private readonly IResultService _resultService;
+    private readonly IRegistrationSlipService _registrationSlipService;
 
     public StudentService(IUserRepository userRepository, IStudentRepository studentRepository,
-        IDocumentService documentService, IResultService resultService)
+        IDocumentService documentService, IResultService resultService,
+        IRegistrationSlipService registrationSlipService)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
         _documentService = documentService;
         _resultService = resultService;
+        _registrationSlipService = registrationSlipService;
     }
 
     public async Task<StudentFormStatus> GetFormStatusAsync(ClaimsPrincipal principal)
@@ -86,6 +89,12 @@ public class StudentService : IStudentService
     {
         var user = await _userRepository.GetUserAsync(principal);
         return await _resultService.GetStudentResultAsync(user!.Id, session, semester);
+    }
+
+    public async Task<byte[]?> GetRegistrationSlipAsync(ClaimsPrincipal principal)
+    {
+        var user = await _userRepository.GetUserAsync(principal);
+        return await _registrationSlipService.GenerateAsync(user!.Id);
     }
 
     private static void ApplyToEntity(StudentForm form, StudentFormViewModel model)

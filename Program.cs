@@ -1,9 +1,12 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using QuestPDF.Infrastructure;
 using Student_Portal.Data;
 using Student_Portal.Models;
 using Student_Portal.Repositories;
 using Student_Portal.Services;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +44,7 @@ builder.Services.AddScoped<IDocumentService, DocumentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IResultService, ResultService>();
 builder.Services.AddScoped<IGpaService, GpaService>();
+builder.Services.AddScoped<IRegistrationSlipService, RegistrationSlipService>();
 
 var app = builder.Build();
 
