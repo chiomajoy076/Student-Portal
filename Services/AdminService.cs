@@ -5,6 +5,8 @@ namespace Student_Portal.Services;
 
 public class AdminService : IAdminService
 {
+    private static readonly string[] AssignableRoles = { "Admin", "ExamOfficer", "Student" };
+
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IDocumentService _documentService;
@@ -17,12 +19,12 @@ public class AdminService : IAdminService
         _documentService = documentService;
     }
 
-    public async Task<IEnumerable<StudentListViewModel>> GetStudentListAsync()
+    public async Task<IEnumerable<StudentListViewModel>> GetStudentListAsync(string? search = null, string? status = null)
     {
         var students = await _userRepository.GetUsersInRoleAsync("Student");
         var forms = await _studentRepository.GetAllAsync();
 
-        return students.Select(s => new StudentListViewModel
+        var list = students.Select(s => new StudentListViewModel
         {
             Id = s.Id,
             Email = s.Email,
@@ -31,8 +33,31 @@ public class AdminService : IAdminService
             CreatedAt = s.CreatedAt,
             HasSubmittedForm = forms.Any(f => f.UserId == s.Id && f.IsSubmitted),
             Gender = s.Gender,
-            PhoneNumber = s.PhoneNumber
+            PhoneNumber = s.PhoneNumber,
+            MatricNumber = forms.FirstOrDefault(f => f.UserId == s.Id)?.MatricNumber,
+            Department = forms.FirstOrDefault(f => f.UserId == s.Id)?.Department
         });
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            list = list.Where(s =>
+                (s.FullName?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (s.Email?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (s.MatricNumber?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (s.Department?.Contains(term, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        if (string.Equals(status, "active", StringComparison.OrdinalIgnoreCase))
+        {
+            list = list.Where(s => s.IsActive);
+        }
+        else if (string.Equals(status, "inactive", StringComparison.OrdinalIgnoreCase))
+        {
+            list = list.Where(s => !s.IsActive);
+        }
+
+        return list.ToList();
     }
 
     public async Task<StudentDetailsViewModel?> GetStudentDetailsAsync(string id)
@@ -56,6 +81,7 @@ public class AdminService : IAdminService
             IsActive = student.IsActive,
             PhoneNumber = student.PhoneNumber,
             Gender = student.Gender,
+            IsLockedOut = await _userRepository.IsLockedOutAsync(student),
             Form = form != null ? new StudentFormViewModel
             {
                 Id = form.Id,
@@ -93,6 +119,141 @@ public class AdminService : IAdminService
         student.IsActive = !student.IsActive;
         student.EmailConfirmed = !student.EmailConfirmed;
         await _userRepository.UpdateAsync(student);
+
+        return ServiceResult.Success();
+    }
+
+    public async Task<EditStudentViewModel?> GetEditStudentAsync(string id)
+    {
+        var student = await _userRepository.FindByIdAsync(id);
+        if (student == null)
+        {
+            return null;
+        }
+
+        var form = await _studentRepository.GetByUserIdAsync(id);
+
+        return new EditStudentViewModel
+        {
+            Id = student.Id,
+            FirstName = student.FirstName,
+            MiddleName = student.MiddleName,
+            LastName = student.LastName,
+            PhoneNumber = student.PhoneNumber,
+            Gender = student.Gender,
+            MatricNumber = form?.MatricNumber,
+            Department = form?.Department,
+            Level = form?.Level
+        };
+    }
+
+    public async Task<ServiceResult> UpdateStudentAsync(EditStudentViewModel model)
+    {
+        var student = await _userRepository.FindByIdAsync(model.Id);
+        if (student == null)
+        {
+            return ServiceResult.Fail("Student not found.");
+        }
+
+        student.FirstName = model.FirstName;
+        student.MiddleName = model.MiddleName;
+        student.LastName = model.LastName;
+        student.PhoneNumber = model.PhoneNumber;
+        student.Gender = model.Gender;
+        await _userRepository.UpdateAsync(student);
+
+        var form = await _studentRepository.GetByUserIdAsync(model.Id);
+        if (form != null)
+        {
+            form.MatricNumber = model.MatricNumber;
+            form.Department = model.Department;
+            form.Level = model.Level;
+            await _studentRepository.SaveChangesAsync();
+        }
+
+        return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> ToggleLockAsync(string id)
+    {
+        var user = await _userRepository.FindByIdAsync(id);
+        if (user == null)
+        {
+            return ServiceResult.Fail("Account not found.");
+        }
+
+        var isLocked = await _userRepository.IsLockedOutAsync(user);
+        if (isLocked)
+        {
+            await _userRepository.SetLockoutEndDateAsync(user, null);
+        }
+        else
+        {
+            await _userRepository.SetLockoutEnabledAsync(user, true);
+            await _userRepository.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+        }
+
+        return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> DeleteAccountAsync(string id)
+    {
+        var user = await _userRepository.FindByIdAsync(id);
+        if (user == null)
+        {
+            return ServiceResult.Fail("Account not found.");
+        }
+
+        var result = await _userRepository.DeleteAsync(user);
+        return result.Succeeded
+            ? ServiceResult.Success()
+            : ServiceResult.Fail(result.Errors.Select(e => e.Description));
+    }
+
+    public async Task<List<UserAccountViewModel>> GetAllUsersAsync()
+    {
+        var users = await _userRepository.GetAllUsersAsync();
+        var result = new List<UserAccountViewModel>();
+
+        foreach (var user in users)
+        {
+            var roles = await _userRepository.GetRolesAsync(user);
+            result.Add(new UserAccountViewModel
+            {
+                Id = user.Id,
+                Email = user.Email,
+                FullName = $"{user.FirstName} {user.LastName}",
+                CurrentRole = roles.FirstOrDefault() ?? "(none)",
+                IsLockedOut = await _userRepository.IsLockedOutAsync(user)
+            });
+        }
+
+        return result;
+    }
+
+    public Task<List<string>> GetAssignableRolesAsync() => Task.FromResult(AssignableRoles.ToList());
+
+    public async Task<ServiceResult> ChangeRoleAsync(string id, string newRole)
+    {
+        if (!AssignableRoles.Contains(newRole))
+        {
+            return ServiceResult.Fail("Invalid role selected.");
+        }
+
+        var user = await _userRepository.FindByIdAsync(id);
+        if (user == null)
+        {
+            return ServiceResult.Fail("Account not found.");
+        }
+
+        var currentRoles = await _userRepository.GetRolesAsync(user);
+        if (currentRoles.Contains("SuperAdmin"))
+        {
+            return ServiceResult.Fail("Cannot change the role of a Super Admin account.");
+        }
+
+        await _userRepository.RemoveFromRolesAsync(user, currentRoles);
+        await _userRepository.AddToRoleAsync(user, newRole);
 
         return ServiceResult.Success();
     }

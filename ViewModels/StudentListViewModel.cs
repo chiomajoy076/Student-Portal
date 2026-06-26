@@ -11,4 +11,6 @@ public class StudentListViewModel
     public bool HasSubmittedForm { get; set; }
     public Gender? Gender { get; set; }
     public string PhoneNumber { get; set; }
+    public string? MatricNumber { get; set; }
+    public string? Department { get; set; }
 }

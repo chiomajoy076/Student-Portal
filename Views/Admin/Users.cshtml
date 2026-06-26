@@ -1,0 +1,50 @@
+@model List<Student_Portal.ViewModels.UserAccountViewModel>
+@{
+    ViewData["Title"] = "Manage Users & Roles";
+    Layout = "_AdminLayout";
+    var roles = ViewBag.AssignableRoles as List<string> ?? new List<string>();
+}
+
+<h2>Manage Users & Roles</h2>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Current Role</th>
+            <th>Lock Status</th>
+            <th>Change Role</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.FullName</td>
+                <td>@user.Email</td>
+                <td>@user.CurrentRole</td>
+                <td>@(user.IsLockedOut ? "Locked" : "Active")</td>
+                <td>
+                    @if (user.CurrentRole != "SuperAdmin")
+                    {
+                        <form asp-action="ChangeRole" method="post" class="d-flex gap-2">
+                            <input type="hidden" name="id" value="@user.Id" />
+                            <select name="newRole" class="form-control form-control-sm">
+                                @foreach (var role in roles)
+                                {
+                                    <option value="@role" selected="@(role == user.CurrentRole ? "selected" : null)">@role</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not changeable</span>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,55 @@
+@model Student_Portal.ViewModels.EditStudentViewModel
+@{
+    ViewData["Title"] = "Edit Student";
+    Layout = "_AdminLayout";
+}
+
+<h2>Edit Student Record</h2>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form asp-action="EditStudent" method="post" class="row g-3">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="col-md-4">
+        <label asp-for="FirstName"></label>
+        <input asp-for="FirstName" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="MiddleName"></label>
+        <input asp-for="MiddleName" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="LastName"></label>
+        <input asp-for="LastName" class="form-control" />
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="PhoneNumber"></label>
+        <input asp-for="PhoneNumber" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Gender"></label>
+        <select asp-for="Gender" class="form-control" asp-items="Html.GetEnumSelectList<Student_Portal.Models.Gender>()">
+            <option value="">-- Select Gender --</option>
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label asp-for="MatricNumber"></label>
+        <input asp-for="MatricNumber" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Department"></label>
+        <input asp-for="Department" class="form-control" />
+    </div>
+    <div class="col-md-4">
+        <label asp-for="Level"></label>
+        <input asp-for="Level" class="form-control" />
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary mt-2">Save Changes</button>
+        <a asp-action="StudentDetails" asp-route-id="@Model.Id" class="btn btn-secondary mt-2">Cancel</a>
+    </div>
+</form>
