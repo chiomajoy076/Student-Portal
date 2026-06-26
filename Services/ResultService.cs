@@ -13,15 +13,18 @@ public class ResultService : IResultService
     private readonly IStudentRepository _studentRepository;
     private readonly IGpaService _gpaService;
     private readonly IGpaRecordRepository _gpaRecordRepository;
+    private readonly IAuditService _auditService;
 
     public ResultService(IResultRepository resultRepository, ICourseRepository courseRepository,
-        IStudentRepository studentRepository, IGpaService gpaService, IGpaRecordRepository gpaRecordRepository)
+        IStudentRepository studentRepository, IGpaService gpaService, IGpaRecordRepository gpaRecordRepository,
+        IAuditService auditService)
     {
         _resultRepository = resultRepository;
         _courseRepository = courseRepository;
         _studentRepository = studentRepository;
         _gpaService = gpaService;
         _gpaRecordRepository = gpaRecordRepository;
+        _auditService = auditService;
     }
 
     public async Task<ServiceResult> UploadSingleResultAsync(ResultUploadViewModel model)
@@ -56,6 +59,7 @@ public class ResultService : IResultService
         await _resultRepository.SaveChangesAsync();
 
         await _gpaService.RecalculateForStudentAsync(student.UserId);
+        await _auditService.LogAsync(student.UserId, $"Result uploaded for course '{course.CourseCode}' (score: {model.Score})");
 
         return ServiceResult.Success();
     }
@@ -139,6 +143,9 @@ public class ResultService : IResultService
         {
             await _gpaService.RecalculateForStudentAsync(userId);
         }
+
+        await _auditService.LogAsync(null,
+            $"Bulk result import processed: {summary.SuccessCount}/{summary.TotalRows} succeeded");
 
         return summary;
     }

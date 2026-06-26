@@ -19,6 +19,9 @@ public class ResultRepository : IResultRepository
     public Task<List<Result>> GetByUserIdAsync(string userId) =>
         _context.Results.Include(r => r.Course).Where(r => r.UserId == userId).ToListAsync();
 
+    public Task<List<Result>> GetAllAsync() =>
+        _context.Results.Include(r => r.Course).Include(r => r.User).ToListAsync();
+
     public async Task AddAsync(Result result)
     {
         await _context.Results.AddAsync(result);

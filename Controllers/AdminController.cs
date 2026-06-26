@@ -9,10 +9,12 @@ namespace Student_Portal.Controllers;
 public class AdminController : Controller
 {
     private readonly IAdminService _adminService;
+    private readonly IAuditService _auditService;
 
-    public AdminController(IAdminService adminService)
+    public AdminController(IAdminService adminService, IAuditService auditService)
     {
         _adminService = adminService;
+        _auditService = auditService;
     }
 
     public async Task<IActionResult> Index(string? search, string? status)
@@ -116,5 +118,12 @@ public class AdminController : Controller
             : string.Join(" ", result.Errors);
 
         return RedirectToAction(nameof(Users));
+    }
+
+    [Authorize(Roles = "SuperAdmin")]
+    public async Task<IActionResult> AuditLogs()
+    {
+        var logs = await _auditService.GetRecentAsync();
+        return View(logs);
     }
 }

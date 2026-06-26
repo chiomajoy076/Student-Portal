@@ -10,13 +10,15 @@ public class AdminService : IAdminService
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IDocumentService _documentService;
+    private readonly IAuditService _auditService;
 
     public AdminService(IUserRepository userRepository, IStudentRepository studentRepository,
-        IDocumentService documentService)
+        IDocumentService documentService, IAuditService auditService)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
         _documentService = documentService;
+        _auditService = auditService;
     }
 
     public async Task<IEnumerable<StudentListViewModel>> GetStudentListAsync(string? search = null, string? status = null)
@@ -120,6 +122,8 @@ public class AdminService : IAdminService
         student.EmailConfirmed = !student.EmailConfirmed;
         await _userRepository.UpdateAsync(student);
 
+        await _auditService.LogAsync(id, student.IsActive ? "Student account approved/activated" : "Student account deactivated");
+
         return ServiceResult.Success();
     }
 
@@ -171,6 +175,8 @@ public class AdminService : IAdminService
             await _studentRepository.SaveChangesAsync();
         }
 
+        await _auditService.LogAsync(model.Id, "Student record edited by admin");
+
         return ServiceResult.Success();
     }
 
@@ -186,11 +192,13 @@ public class AdminService : IAdminService
         if (isLocked)
         {
             await _userRepository.SetLockoutEndDateAsync(user, null);
+            await _auditService.LogAsync(id, "Account unlocked by admin");
         }
         else
         {
             await _userRepository.SetLockoutEnabledAsync(user, true);
             await _userRepository.SetLockoutEndDateAsync(user, DateTimeOffset.MaxValue);
+            await _auditService.LogAsync(id, "Account locked by admin");
         }
 
         return ServiceResult.Success();
@@ -205,9 +213,13 @@ public class AdminService : IAdminService
         }
 
         var result = await _userRepository.DeleteAsync(user);
-        return result.Succeeded
-            ? ServiceResult.Success()
-            : ServiceResult.Fail(result.Errors.Select(e => e.Description));
+        if (result.Succeeded)
+        {
+            await _auditService.LogAsync(null, $"Account deleted by admin (was: {user.Email})");
+            return ServiceResult.Success();
+        }
+
+        return ServiceResult.Fail(result.Errors.Select(e => e.Description));
     }
 
     public async Task<List<UserAccountViewModel>> GetAllUsersAsync()
@@ -254,6 +266,8 @@ public class AdminService : IAdminService
 
         await _userRepository.RemoveFromRolesAsync(user, currentRoles);
         await _userRepository.AddToRoleAsync(user, newRole);
+
+        await _auditService.LogAsync(id, $"Role changed to '{newRole}' by SuperAdmin");
 
         return ServiceResult.Success();
     }

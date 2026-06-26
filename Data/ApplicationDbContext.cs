@@ -16,6 +16,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Course> Courses { get; set; }
     public DbSet<Result> Results { get; set; }
     public DbSet<GpaRecord> GpaRecords { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -70,5 +71,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<GpaRecord>()
             .Property(g => g.CGPA)
             .HasColumnType("decimal(4,2)");
+
+        builder.Entity<AuditLog>()
+            .HasOne(a => a.User)
+            .WithMany()
+            .HasForeignKey(a => a.UserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

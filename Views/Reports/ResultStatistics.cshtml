@@ -1,0 +1,65 @@
+@model Student_Portal.ViewModels.ResultStatisticsViewModel
+@using Student_Portal.Models
+@{
+    ViewData["Title"] = "Result Statistics";
+    Layout = "_AdminLayout";
+}
+
+<h2>Result Statistics</h2>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-3">
+        <input type="text" name="session" value="@Model.Session" class="form-control" placeholder="Session e.g. 2024/2025" />
+    </div>
+    <div class="col-md-3">
+        <select name="semester" class="form-control">
+            <option value="">All Semesters</option>
+            <option value="First" selected="@(Model.Semester == "First" ? "selected" : null)">First</option>
+            <option value="Second" selected="@(Model.Semester == "Second" ? "selected" : null)">Second</option>
+        </select>
+    </div>
+    <div class="col-md-3">
+        <input type="text" name="department" value="@Model.Department" class="form-control" placeholder="Filter by department" />
+    </div>
+    <div class="col-md-3">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a asp-action="ResultStatistics" class="btn btn-secondary">Reset</a>
+    </div>
+</form>
+
+<div class="mb-3">
+    <a asp-action="ExportResultStatsPdf" asp-route-session="@Model.Session" asp-route-semester="@Model.Semester" asp-route-department="@Model.Department" class="btn btn-outline-danger">Export PDF</a>
+    <a asp-action="ExportResultStatsExcel" asp-route-session="@Model.Session" asp-route-semester="@Model.Semester" asp-route-department="@Model.Department" class="btn btn-outline-success">Export Excel</a>
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Code</th>
+            <th>Title</th>
+            <th>Department</th>
+            <th>Session</th>
+            <th>Semester</th>
+            <th>Students</th>
+            <th>Avg Score</th>
+            <th>Pass</th>
+            <th>Fail</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var course in Model.Courses)
+        {
+            <tr>
+                <td>@course.CourseCode</td>
+                <td>@course.CourseTitle</td>
+                <td>@course.Department</td>
+                <td>@course.Session</td>
+                <td>@course.Semester</td>
+                <td>@course.TotalStudents</td>
+                <td>@course.AverageScore.ToString("0.00")</td>
+                <td>@course.PassCount</td>
+                <td>@course.FailCount</td>
+            </tr>
+        }
+    </tbody>
+</table>

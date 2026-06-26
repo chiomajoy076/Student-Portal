@@ -26,10 +26,16 @@
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-controller="Results" asp-action="UploadResult">Results</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link text-dark" asp-controller="Reports" asp-action="RegistrationReport">Reports</a>
+                    </li>
                     @if (User.IsInRole("SuperAdmin"))
                     {
                         <li class="nav-item">
                             <a class="nav-link text-dark" asp-controller="Admin" asp-action="Users">Users & Roles</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Admin" asp-action="AuditLogs">Audit Logs</a>
                         </li>
                     }
                 </ul>
