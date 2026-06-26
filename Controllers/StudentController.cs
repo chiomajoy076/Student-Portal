@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Student_Portal.Models;
 using Student_Portal.Services;
 using Student_Portal.ViewModels;
 
@@ -76,5 +77,25 @@ public class StudentController : Controller
                 : "Your form has been saved.";
 
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CheckResult(string? session, Semester? semester)
+    {
+        var periods = await _studentService.GetAvailableResultPeriodsAsync(User);
+        ViewBag.Periods = periods;
+
+        if (session == null || semester == null)
+        {
+            return View(null);
+        }
+
+        var result = await _studentService.GetResultAsync(User, session, semester.Value);
+        if (result == null)
+        {
+            TempData["Error"] = "No result found for the selected session and semester.";
+        }
+
+        return View(result);
     }
 }

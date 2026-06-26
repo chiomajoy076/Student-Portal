@@ -1,0 +1,82 @@
+@model Student_Portal.ViewModels.ResultCheckViewModel
+@using Student_Portal.ViewModels
+@{
+    ViewData["Title"] = "Check Result";
+    var periods = ViewBag.Periods as List<AcademicPeriod> ?? new List<AcademicPeriod>();
+}
+
+<div class="d-print-none">
+    <h2>Check Result</h2>
+
+    <form method="get" class="row g-3 mb-4">
+        <div class="col-md-5">
+            <label>Session / Semester</label>
+            <select name="session_semester" class="form-control" onchange="
+                var parts = this.value.split('|');
+                window.location.href = '@Url.Action("CheckResult")?session=' + encodeURIComponent(parts[0]) + '&semester=' + parts[1];
+            ">
+                <option value="">-- Select Session / Semester --</option>
+                @foreach (var period in periods)
+                {
+                    var selected = Model != null && Model.Session == period.Session && Model.Semester == period.Semester;
+                    <option value="@period.Session|@((int)period.Semester)" selected="@(selected ? "selected" : null)">
+                        @period.Label
+                    </option>
+                }
+            </select>
+        </div>
+    </form>
+</div>
+
+@if (Model != null)
+{
+    <div id="printable">
+        <div class="text-center mb-4">
+            <h3>AE-FUNAI Result Slip</h3>
+            <p>@Model.Session - @Model.Semester Semester</p>
+        </div>
+
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Course Code</th>
+                    <th>Course Title</th>
+                    <th>Credit Unit</th>
+                    <th>Score</th>
+                    <th>Grade</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var course in Model.Courses)
+                {
+                    <tr>
+                        <td>@course.CourseCode</td>
+                        <td>@course.CourseTitle</td>
+                        <td>@course.CreditUnit</td>
+                        <td>@course.Score</td>
+                        <td>@course.Grade</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="row mt-3">
+            <div class="col-md-3">
+                <strong>GPA:</strong> @Model.GPA.ToString("0.00")
+            </div>
+            <div class="col-md-3">
+                <strong>CGPA:</strong> @Model.CGPA.ToString("0.00")
+            </div>
+        </div>
+    </div>
+
+    <button onclick="window.print()" class="btn btn-primary mt-4 d-print-none">Print Result</button>
+}
+
+<style>
+    @@media print {
+        .navbar, footer, .d-print-none {
+            display: none !important;
+        }
+    }
+</style>

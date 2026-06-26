@@ -10,13 +10,15 @@ public class StudentService : IStudentService
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IDocumentService _documentService;
+    private readonly IResultService _resultService;
 
     public StudentService(IUserRepository userRepository, IStudentRepository studentRepository,
-        IDocumentService documentService)
+        IDocumentService documentService, IResultService resultService)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
         _documentService = documentService;
+        _resultService = resultService;
     }
 
     public async Task<StudentFormStatus> GetFormStatusAsync(ClaimsPrincipal principal)
@@ -72,6 +74,18 @@ public class StudentService : IStudentService
     {
         var user = await _userRepository.GetUserAsync(principal);
         return await _documentService.UploadAsync(user!.Id, file);
+    }
+
+    public async Task<List<AcademicPeriod>> GetAvailableResultPeriodsAsync(ClaimsPrincipal principal)
+    {
+        var user = await _userRepository.GetUserAsync(principal);
+        return await _resultService.GetAvailablePeriodsAsync(user!.Id);
+    }
+
+    public async Task<ResultCheckViewModel?> GetResultAsync(ClaimsPrincipal principal, string session, Semester semester)
+    {
+        var user = await _userRepository.GetUserAsync(principal);
+        return await _resultService.GetStudentResultAsync(user!.Id, session, semester);
     }
 
     private static void ApplyToEntity(StudentForm form, StudentFormViewModel model)

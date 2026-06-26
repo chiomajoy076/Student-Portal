@@ -12,14 +12,16 @@ public class ResultService : IResultService
     private readonly ICourseRepository _courseRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IGpaService _gpaService;
+    private readonly IGpaRecordRepository _gpaRecordRepository;
 
     public ResultService(IResultRepository resultRepository, ICourseRepository courseRepository,
-        IStudentRepository studentRepository, IGpaService gpaService)
+        IStudentRepository studentRepository, IGpaService gpaService, IGpaRecordRepository gpaRecordRepository)
     {
         _resultRepository = resultRepository;
         _courseRepository = courseRepository;
         _studentRepository = studentRepository;
         _gpaService = gpaService;
+        _gpaRecordRepository = gpaRecordRepository;
     }
 
     public async Task<ServiceResult> UploadSingleResultAsync(ResultUploadViewModel model)
@@ -139,5 +141,48 @@ public class ResultService : IResultService
         }
 
         return summary;
+    }
+
+    public async Task<List<AcademicPeriod>> GetAvailablePeriodsAsync(string userId)
+    {
+        var results = await _resultRepository.GetByUserIdAsync(userId);
+
+        return results
+            .Select(r => new AcademicPeriod { Session = r.Course.Session, Semester = r.Course.Semester })
+            .Distinct()
+            .OrderByDescending(p => p.Session)
+            .ThenByDescending(p => p.Semester)
+            .ToList();
+    }
+
+    public async Task<ResultCheckViewModel?> GetStudentResultAsync(string userId, string session, Semester semester)
+    {
+        var results = await _resultRepository.GetByUserIdAsync(userId);
+        var periodResults = results
+            .Where(r => r.Course.Session == session && r.Course.Semester == semester)
+            .ToList();
+
+        if (periodResults.Count == 0)
+        {
+            return null;
+        }
+
+        var gpaRecord = await _gpaRecordRepository.GetByUserSessionSemesterAsync(userId, session, semester);
+
+        return new ResultCheckViewModel
+        {
+            Session = session,
+            Semester = semester,
+            GPA = gpaRecord?.GPA ?? 0,
+            CGPA = gpaRecord?.CGPA ?? 0,
+            Courses = periodResults.Select(r => new CourseResultRow
+            {
+                CourseCode = r.Course.CourseCode,
+                CourseTitle = r.Course.CourseTitle,
+                CreditUnit = r.Course.CreditUnit,
+                Score = r.Score,
+                Grade = r.Grade
+            }).ToList()
+        };
     }
 }
