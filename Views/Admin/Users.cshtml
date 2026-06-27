@@ -1,0 +1,69 @@
+@model List<Student_Portal.ViewModels.UserAccountViewModel>
+@{
+    ViewData["Title"] = "Manage Users & Roles";
+    Layout = "_AdminLayout";
+    var roles = ViewBag.AssignableRoles as List<string> ?? new List<string>();
+}
+
+<h2>Manage Users & Roles</h2>
+<a asp-action="CreateStaff" class="btn btn-primary mb-3">Create Staff Account</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Roles</th>
+            <th>Departments</th>
+            <th>Lock Status</th>
+            <th>Change Role</th>
+            <th>Lecturer Options</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.FullName</td>
+                <td>@user.Email</td>
+                <td>@string.Join(", ", user.Roles)</td>
+                <td>@(user.IsLecturer ? string.Join(", ", user.Departments) : "-")</td>
+                <td>@(user.IsLockedOut ? "Locked" : "Active")</td>
+                <td>
+                    @if (user.CurrentRole != "SuperAdmin")
+                    {
+                        <form asp-action="ChangeRole" method="post" class="d-flex gap-2">
+                            <input type="hidden" name="id" value="@user.Id" />
+                            <select name="newRole" class="form-control form-control-sm">
+                                @foreach (var role in roles)
+                                {
+                                    <option value="@role" selected="@(role == user.CurrentRole ? "selected" : null)">@role</option>
+                                }
+                            </select>
+                            <button type="submit" class="btn btn-sm btn-primary">Update</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <span class="text-muted">Not changeable</span>
+                    }
+                </td>
+                <td>
+                    @if (user.IsLecturer)
+                    {
+                        <a asp-action="ManageLecturerDepartments" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary mb-1">
+                            Departments
+                        </a>
+                        <form asp-action="ToggleExamOfficerForLecturer" method="post" class="d-inline">
+                            <input type="hidden" name="id" value="@user.Id" />
+                            <input type="hidden" name="enabled" value="@(!user.IsExamOfficer)" />
+                            <button type="submit" class="btn btn-sm btn-outline-primary">
+                                @(user.IsExamOfficer ? "Revoke" : "Grant") Exam Officer
+                            </button>
+                        </form>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

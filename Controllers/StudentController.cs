@@ -1,9 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Student_Portal.Data;
 using Student_Portal.Models;
+using Student_Portal.Services;
 using Student_Portal.ViewModels;
 
 namespace Student_Portal.Controllers;
@@ -11,98 +9,39 @@ namespace Student_Portal.Controllers;
 [Authorize(Roles = "Student")]
 public class StudentController : Controller
 {
-    private readonly UserManager<ApplicationUser> _userManager;
-    private readonly ApplicationDbContext _context;
+    private readonly IStudentService _studentService;
+    private readonly ICourseRegistrationService _courseRegistrationService;
 
-    public StudentController(
-        UserManager<ApplicationUser> userManager,
-        ApplicationDbContext context)
+    public StudentController(IStudentService studentService, ICourseRegistrationService courseRegistrationService)
     {
-        _userManager = userManager;
-        _context = context;
+        _studentService = studentService;
+        _courseRegistrationService = courseRegistrationService;
     }
-    
+
     public async Task<IActionResult> Index()
     {
-        var user = await _userManager.GetUserAsync(User);
-        var form = await _context.StudentForms
-            .FirstOrDefaultAsync(f => f.UserId == user.Id);
+        var status = await _studentService.GetFormStatusAsync(User);
 
-        if (form == null)
+        if (!status.Exists)
         {
             return RedirectToAction(nameof(Form));
         }
 
-        var viewModel = new StudentFormViewModel
-        {
-            Id = form.Id,
-            MatricNumber = form.MatricNumber,
-            Department = form.Department,
-            Level = form.Level,
-            UploadedDocumentBase64 = form.UploadedDocument,
-            IsSubmitted = form.IsSubmitted,
-            LastUpdated = form.LastUpdated,
-            SubmittedAt = form.SubmittedAt,
-            DateOfBirth = form.DateOfBirth,
-            JambRegNumber = form.JambRegNumber,
-            JambScore = form.JambScore,
-            LocalGov = form.LocalGov,
-            MaritalStatus = form.MaritalStatus,
-            ModeOfEntry = form.ModeOfEntry,
-            Nationality = form.Nationality,
-            NextOfKin = form.NextOfKin,
-            NextOfKinPhoneNumber = form.NextOfKinPhoneNumber,
-            PostUtmeScore = form.PostUtmeScore,
-            State = form.State,
-            WAECRegNumber = form.WAECRegNumber,
-        };
-
-        return View(viewModel);
+        return View(status.Form);
     }
-
 
     [HttpGet]
     public async Task<IActionResult> Form()
     {
-        var user = await _userManager.GetUserAsync(User);
-        var form = await _context.StudentForms
-            .FirstOrDefaultAsync(f => f.UserId == user.Id);
+        var status = await _studentService.GetFormStatusAsync(User);
 
-        if (form != null && form.IsSubmitted)
+        if (status.IsSubmitted)
         {
             // Redirect to Index if form is already submitted
             return RedirectToAction(nameof(Index));
         }
 
-        if (form == null)
-        {
-            return View(new StudentFormViewModel());
-        }
-
-        var viewModel = new StudentFormViewModel
-        {
-            Id = form.Id,
-            MatricNumber = form.MatricNumber,
-            Department = form.Department,
-            Level = form.Level,
-            UploadedDocumentBase64 = form.UploadedDocument,
-            IsSubmitted = form.IsSubmitted,
-            LastUpdated = form.LastUpdated,
-            DateOfBirth = form.DateOfBirth,
-            JambRegNumber = form.JambRegNumber,
-            JambScore = form.JambScore,
-            LocalGov = form.LocalGov,
-            MaritalStatus = form.MaritalStatus,
-            ModeOfEntry = form.ModeOfEntry,
-            Nationality = form.Nationality,
-            NextOfKin = form.NextOfKin,
-            NextOfKinPhoneNumber = form.NextOfKinPhoneNumber,
-            PostUtmeScore = form.PostUtmeScore,
-            State = form.State,
-            WAECRegNumber = form.WAECRegNumber,
-        };
-
-        return View(viewModel);
+        return View(status.Form ?? new StudentFormViewModel());
     }
 
     [HttpPost]
@@ -113,77 +52,105 @@ public class StudentController : Controller
             return View(model);
         }
 
-        var user = await _userManager.GetUserAsync(User);
-        var form = await _context.StudentForms
-            .FirstOrDefaultAsync(f => f.UserId == user.Id);
+        if (document != null)
+        {
+            var uploadResult = await _studentService.UploadDocumentAsync(User, document);
+            if (!uploadResult.Succeeded)
+            {
+                foreach (var error in uploadResult.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error);
+                }
 
-        if (form?.IsSubmitted == true)
+                return View(model);
+            }
+        }
+
+        var result = await _studentService.SaveFormAsync(User, model);
+        if (!result.Succeeded)
         {
             return RedirectToAction(nameof(Index));
         }
 
-        if (document != null)
-        {
-            using var ms = new MemoryStream();
-            await document.CopyToAsync(ms);
-            var fileBytes = ms.ToArray();
-            model.UploadedDocumentBase64 = Convert.ToBase64String(fileBytes);
-        }
+        TempData["Success"] = document != null
+            ? "Document uploaded and form saved successfully."
+            : model.IsSubmitted
+                ? "Your form has been submitted successfully."
+                : "Your form has been saved.";
 
-        if (form == null)
-        {
-            form = new StudentForm
-            {
-                UserId = user.Id,
-                MatricNumber = model.MatricNumber,
-                Department = model.Department,
-                Level = model.Level,
-                UploadedDocument = model.UploadedDocumentBase64,
-                IsSubmitted = model.IsSubmitted,
-                LastUpdated = DateTime.UtcNow,
-                SubmittedAt = model.IsSubmitted ? DateTime.UtcNow : null,
-                DateOfBirth = model.DateOfBirth,
-                JambRegNumber = model.JambRegNumber,
-                JambScore = model.JambScore,
-                LocalGov = model.LocalGov,
-                MaritalStatus = model.MaritalStatus,
-                ModeOfEntry = model.ModeOfEntry,
-                Nationality = model.Nationality,
-                NextOfKin = model.NextOfKin,
-                NextOfKinPhoneNumber = model.NextOfKinPhoneNumber,
-                PostUtmeScore = model.PostUtmeScore,
-                State = model.State,
-                WAECRegNumber = model.WAECRegNumber,
-            };
-            _context.StudentForms.Add(form);
-        }
-        else
-        {
-            form.MatricNumber = model.MatricNumber;
-            form.Department = model.Department;
-            form.Level = model.Level;
-            if (model.UploadedDocumentBase64 != null)
-            {
-                form.UploadedDocument = model.UploadedDocumentBase64;
-            }
-            form.IsSubmitted = model.IsSubmitted;
-            form.LastUpdated = DateTime.UtcNow;
-            form.SubmittedAt = model.IsSubmitted ? DateTime.UtcNow : null;
-            form.DateOfBirth = model.DateOfBirth;
-            form.JambRegNumber = model.JambRegNumber;
-            form.JambScore = model.JambScore;
-            form.LocalGov = model.LocalGov;
-            form.MaritalStatus = model.MaritalStatus;
-            form.ModeOfEntry = model.ModeOfEntry;
-            form.Nationality = model.Nationality;
-            form.NextOfKin = model.NextOfKin;
-            form.NextOfKinPhoneNumber = model.NextOfKinPhoneNumber;
-            form.PostUtmeScore = model.PostUtmeScore;
-            form.State = model.State;
-            form.WAECRegNumber = model.WAECRegNumber;
-        }
-
-        await _context.SaveChangesAsync();
         return RedirectToAction(nameof(Index));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> CheckResult(string? session, Semester? semester)
+    {
+        var periods = await _studentService.GetAvailableResultPeriodsAsync(User);
+        ViewBag.Periods = periods;
+
+        if (session == null || semester == null)
+        {
+            return View(null);
+        }
+
+        var result = await _studentService.GetResultAsync(User, session, semester.Value);
+        if (result == null)
+        {
+            TempData["Error"] = "No result found for the selected session and semester.";
+        }
+
+        return View(result);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> DownloadRegistrationSlip()
+    {
+        var pdfBytes = await _studentService.GetRegistrationSlipAsync(User);
+        if (pdfBytes == null)
+        {
+            TempData["Error"] = "Registration slip is only available after your form is submitted and your account is approved.";
+            return RedirectToAction(nameof(Index));
+        }
+
+        return File(pdfBytes, "application/pdf", "RegistrationSlip.pdf");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> MyCourses()
+    {
+        var courses = await _courseRegistrationService.GetAvailableCoursesAsync(User);
+        return View(courses);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RegisterCourse(int courseId)
+    {
+        var result = await _courseRegistrationService.RegisterAsync(User, courseId);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Course registered successfully."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(MyCourses));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UnregisterCourse(int courseId)
+    {
+        var result = await _courseRegistrationService.UnregisterAsync(User, courseId);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Course unregistered successfully."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(MyCourses));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SubmitRegistration(string session, Semester semester)
+    {
+        var result = await _courseRegistrationService.SubmitRegistrationAsync(User, session, semester);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? $"Course registration finalized for {session} {semester} semester."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(MyCourses));
     }
 }

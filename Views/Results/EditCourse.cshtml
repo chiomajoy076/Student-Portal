@@ -1,0 +1,67 @@
+@model Student_Portal.ViewModels.CourseViewModel
+@using Student_Portal.Models
+@{
+    ViewData["Title"] = "Edit Course";
+    Layout = "_AdminLayout";
+    var sessions = AcademicSessions.GetSelectableSessions();
+}
+
+<h2>Edit Course</h2>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
+<form asp-action="EditCourse" method="post" class="row g-3">
+    <input type="hidden" asp-for="Id" />
+
+    <div class="col-md-2">
+        <label asp-for="CourseCode"></label>
+        <input asp-for="CourseCode" class="form-control" />
+    </div>
+    <div class="col-md-3">
+        <label asp-for="CourseTitle"></label>
+        <input asp-for="CourseTitle" class="form-control" />
+    </div>
+    <div class="col-md-1">
+        <label asp-for="CreditUnit"></label>
+        <input asp-for="CreditUnit" type="number" class="form-control" />
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Semester"></label>
+        <select asp-for="Semester" class="form-control">
+            <option value="First">First</option>
+            <option value="Second">Second</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Session"></label>
+        <select asp-for="Session" class="form-control">
+            @foreach (var session in sessions)
+            {
+                <option value="@session">@session</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Department"></label>
+        <select asp-for="Department" class="form-control">
+            @foreach (var dept in Departments.All)
+            {
+                <option value="@dept">@dept</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Level"></label>
+        <select asp-for="Level" class="form-control">
+            <option value="100">100 Level</option>
+            <option value="200">200 Level</option>
+            <option value="300">300 Level</option>
+            <option value="400">400 Level</option>
+        </select>
+    </div>
+
+    <div class="col-12">
+        <button type="submit" class="btn btn-primary mt-2">Save Changes</button>
+        <a asp-action="Courses" class="btn btn-secondary mt-2">Cancel</a>
+    </div>
+</form>

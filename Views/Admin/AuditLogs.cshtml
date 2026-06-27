@@ -1,0 +1,30 @@
+@model List<Student_Portal.ViewModels.AuditLogViewModel>
+@{
+    ViewData["Title"] = "Audit Logs";
+    Layout = "_AdminLayout";
+}
+
+<h2>Audit Logs</h2>
+<p class="text-muted">Showing the most recent @Model.Count activity log entries.</p>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Timestamp (UTC)</th>
+            <th>User</th>
+            <th>Action</th>
+            <th>IP Address</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var log in Model)
+        {
+            <tr>
+                <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                <td>@(log.UserEmail ?? "(unknown)")</td>
+                <td>@log.Action</td>
+                <td>@(log.IPAddress ?? "-")</td>
+            </tr>
+        }
+    </tbody>
+</table>

@@ -1,0 +1,87 @@
+@model List<Student_Portal.ViewModels.AvailableCourseViewModel>
+@{
+    ViewData["Title"] = "My Courses";
+    var groups = Model
+        .GroupBy(c => (c.Session, c.Semester))
+        .OrderByDescending(g => g.Key.Session)
+        .ThenByDescending(g => g.Key.Semester);
+}
+
+<div class="container">
+    <h2>My Courses</h2>
+    <p class="text-muted">Courses shown match your department and level on file.</p>
+
+    @if (!Model.Any())
+    {
+        <div class="alert alert-info">
+            No courses are available yet for your department and level. Make sure your biodata form is saved first.
+        </div>
+    }
+
+    @foreach (var group in groups)
+    {
+        var isFinalized = group.First().IsFinalized;
+        var hasRegistered = group.Any(c => c.IsRegistered);
+
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>@group.Key.Session - @group.Key.Semester Semester</span>
+                @if (isFinalized)
+                {
+                    <span class="badge bg-success">Finalized</span>
+                }
+                else if (hasRegistered)
+                {
+                    <form asp-action="SubmitRegistration" method="post"
+                          onsubmit="return confirm('Submit final registration for this session/semester? You will not be able to add or remove courses afterwards.');">
+                        <input type="hidden" name="session" value="@group.Key.Session" />
+                        <input type="hidden" name="semester" value="@group.Key.Semester" />
+                        <button type="submit" class="btn btn-sm btn-success">Submit Registration</button>
+                    </form>
+                }
+            </div>
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Title</th>
+                        <th>Credit Unit</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in group)
+                    {
+                        <tr>
+                            <td>@course.CourseCode</td>
+                            <td>@course.CourseTitle</td>
+                            <td>@course.CreditUnit</td>
+                            <td>@(course.IsRegistered ? "Registered" : "Not registered")</td>
+                            <td>
+                                @if (isFinalized)
+                                {
+                                    <span class="text-muted">Locked</span>
+                                }
+                                else if (course.IsRegistered)
+                                {
+                                    <form asp-action="UnregisterCourse" method="post" class="d-inline">
+                                        <input type="hidden" name="courseId" value="@course.CourseId" />
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Unregister</button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <form asp-action="RegisterCourse" method="post" class="d-inline">
+                                        <input type="hidden" name="courseId" value="@course.CourseId" />
+                                        <button type="submit" class="btn btn-sm btn-primary">Register</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

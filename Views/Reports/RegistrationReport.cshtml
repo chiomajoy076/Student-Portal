@@ -1,0 +1,56 @@
+@model Student_Portal.ViewModels.RegistrationReportViewModel
+@{
+    ViewData["Title"] = "Registration Report";
+    Layout = "_AdminLayout";
+}
+
+<h2>Registration Report</h2>
+<a asp-action="ResultStatistics" class="btn btn-link mb-2">View Result Statistics &raquo;</a>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="department" value="@Model.DepartmentFilter" class="form-control" placeholder="Filter by department" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a asp-action="RegistrationReport" class="btn btn-secondary">Reset</a>
+    </div>
+    <div class="col-md-6 text-end">
+        <a asp-action="ExportRegistrationPdf" asp-route-department="@Model.DepartmentFilter" class="btn btn-outline-danger">Export PDF</a>
+        <a asp-action="ExportRegistrationExcel" asp-route-department="@Model.DepartmentFilter" class="btn btn-outline-success">Export Excel</a>
+    </div>
+</form>
+
+<div class="alert alert-info">
+    Total registered: <strong>@Model.TotalCount</strong>
+    @foreach (var kvp in Model.CountsByDepartment)
+    {
+        <span class="ms-3">@kvp.Key: <strong>@kvp.Value</strong></span>
+    }
+</div>
+
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Matric No.</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Level</th>
+            <th>Registered</th>
+            <th>Submitted</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var row in Model.Rows)
+        {
+            <tr>
+                <td>@row.MatricNumber</td>
+                <td>@row.FullName</td>
+                <td>@row.Department</td>
+                <td>@row.Level</td>
+                <td>@(row.RegisteredAt?.ToString("yyyy-MM-dd") ?? "-")</td>
+                <td>@(row.IsSubmitted ? "Yes" : "No")</td>
+            </tr>
+        }
+    </tbody>
+</table>

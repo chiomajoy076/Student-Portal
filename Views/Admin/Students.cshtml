@@ -115,12 +115,11 @@
         <input type="file" name="document" class="form-control-file" />
     </div>
 
-    @if (!string.IsNullOrEmpty(Model.UploadedDocumentBase64))
+    @if (!string.IsNullOrEmpty(Model.DocumentUrl))
     {
         <div class="mt-3">
             <h6>Current Document</h6>
-            <img src="data:image/png;base64,@Model.UploadedDocumentBase64" 
-                 class="img-fluid" alt="Uploaded Document" />
+            <a href="@Model.DocumentUrl" target="_blank">@Model.DocumentFileName</a>
         </div>
     }
 

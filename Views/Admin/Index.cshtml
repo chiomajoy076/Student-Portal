@@ -6,13 +6,32 @@
 
 <h2>Student Management</h2>
 
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-5">
+        <input type="text" name="search" value="@ViewBag.Search" class="form-control"
+               placeholder="Search by name, email, matric number or department" />
+    </div>
+    <div class="col-md-3">
+        <select name="status" class="form-control">
+            <option value="" selected="@(ViewBag.Status == null ? "selected" : null)">All Statuses</option>
+            <option value="active" selected="@(ViewBag.Status == "active" ? "selected" : null)">Active</option>
+            <option value="inactive" selected="@(ViewBag.Status == "inactive" ? "selected" : null)">Inactive</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a asp-action="Index" class="btn btn-secondary">Reset</a>
+    </div>
+</form>
+
 <table class="table">
     <thead>
     <tr>
         <th>Name</th>
         <th>Email</th>
+        <th>Matric No.</th>
+        <th>Department</th>
         <th>Phone Number</th>
-        <th>Gender</th>
         <th>Status</th>
         <th>Registration Date</th>
         <th>Form Status</th>
@@ -25,13 +44,14 @@
         <tr>
             <td>@student.FullName</td>
             <td>@student.Email</td>
+            <td>@student.MatricNumber</td>
+            <td>@student.Department</td>
             <td>@student.PhoneNumber</td>
-            <td>@student.Gender</td>
             <td>@(student.IsActive ? "Active" : "Inactive")</td>
             <td>@student.CreatedAt.ToString("d")</td>
             <td>@(student.HasSubmittedForm ? "Submitted" : "Pending")</td>
             <td>
-                <a asp-action="StudentDetails" asp-route-id="@student.Id" 
+                <a asp-action="StudentDetails" asp-route-id="@student.Id"
                    class="btn btn-info btn-sm">Details</a>
             </td>
         </tr>

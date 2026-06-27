@@ -1,0 +1,50 @@
+@model List<Student_Portal.ViewModels.CourseRosterViewModel>
+@{
+    ViewData["Title"] = "Registered Students";
+    Layout = "_AdminLayout";
+}
+
+<h2>Registered Students</h2>
+
+@if (!Model.Any())
+{
+    <div class="alert alert-info">No courses found.</div>
+}
+
+@foreach (var course in Model)
+{
+    <div class="card mb-3">
+        <div class="card-header">
+            @course.CourseCode - @course.CourseTitle
+            <span class="text-muted">(@course.Department, @course.Session, @course.Semester Semester)</span>
+        </div>
+        <div class="card-body">
+            @if (!course.Students.Any())
+            {
+                <p class="text-muted mb-0">No students registered yet.</p>
+            }
+            else
+            {
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th>Matric No.</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var student in course.Students)
+                        {
+                            <tr>
+                                <td>@student.MatricNumber</td>
+                                <td>@student.FullName</td>
+                                <td>@student.Email</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+}
