@@ -1,0 +1,27 @@
+@model Student_Portal.ViewModels.ResultImportSummaryViewModel
+@{
+    ViewData["Title"] = "Import Summary";
+    Layout = "_AdminLayout";
+}
+
+<h2>Import Summary</h2>
+
+<div class="alert alert-info">
+    Processed @Model.TotalRows row(s). @Model.SuccessCount succeeded, @Model.RowErrors.Count failed.
+</div>
+
+@if (Model.RowErrors.Any())
+{
+    <div class="alert alert-warning">
+        <strong>Errors:</strong>
+        <ul>
+            @foreach (var error in Model.RowErrors)
+            {
+                <li>@error</li>
+            }
+        </ul>
+    </div>
+}
+
+<a asp-action="ImportResults" class="btn btn-secondary">Import Another File</a>
+<a asp-action="UploadResult" class="btn btn-primary">Back to Results</a>

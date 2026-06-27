@@ -1,0 +1,20 @@
+@{
+    ViewData["Title"] = "Bulk Import Results";
+    Layout = "_AdminLayout";
+}
+
+<h2>Bulk Import Results (CSV)</h2>
+
+<p>
+    The CSV file must have a header row with these columns: <code>MatricNumber, CourseCode, Session, Semester, Score</code>.<br />
+    Example: <code>2024/CS/001,CSC101,2024/2025,First,75</code>
+</p>
+
+<a asp-action="DownloadSampleCsv" class="btn btn-outline-secondary mb-3">Download Sample Sheet</a>
+
+<form asp-action="ImportResults" method="post" enctype="multipart/form-data">
+    <div class="form-group">
+        <input type="file" name="file" class="form-control" accept=".csv" required />
+    </div>
+    <button type="submit" class="btn btn-primary mt-3">Import</button>
+</form>

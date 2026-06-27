@@ -5,12 +5,15 @@
 
 <div class="container">
     <h2>My Form Status</h2>
+    <a asp-action="CheckResult" class="btn btn-outline-primary mb-3">Check Result</a>
+    <a asp-action="MyCourses" class="btn btn-outline-secondary mb-3">My Courses</a>
 
     @if (Model.IsSubmitted)
     {
         <div class="alert alert-success">
             <h4>Form Submitted Successfully</h4>
             <p>Submitted on: @Model.SubmittedAt?.ToString("MMMM dd, yyyy HH:mm")</p>
+            <a asp-action="DownloadRegistrationSlip" class="btn btn-sm btn-success">Download Registration Slip</a>
         </div>
 
         <div class="card mt-4">
@@ -62,13 +65,12 @@
                     <dt class="col-sm-3">Next of Kin Phone Number</dt>
                     <dd class="col-sm-9">@Model.NextOfKinPhoneNumber</dd>
 
-                    @if (!string.IsNullOrEmpty(Model.UploadedDocumentBase64))
+                    @if (!string.IsNullOrEmpty(Model.DocumentUrl))
                     {
                         <dt class="col-sm-3">Uploaded Document</dt>
                         <dd class="col-sm-9">
-                            <a href="data:application/pdf;base64,@Model.UploadedDocumentBase64" 
-                               target="_blank" class="btn btn-sm btn-primary">
-                                View Document
+                            <a href="@Model.DocumentUrl" target="_blank" class="btn btn-sm btn-primary">
+                                View Document (@Model.DocumentFileName)
                             </a>
                         </dd>
                     }

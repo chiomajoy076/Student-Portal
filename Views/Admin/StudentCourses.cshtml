@@ -1,0 +1,80 @@
+@model List<Student_Portal.ViewModels.StudentRegisteredCourseViewModel>
+@using Student_Portal.ViewModels
+@{
+    ViewData["Title"] = "Student Courses";
+    Layout = "_AdminLayout";
+    var studentId = ViewBag.StudentId as string;
+    var eligible = ViewBag.EligibleCourses as List<AvailableCourseViewModel> ?? new List<AvailableCourseViewModel>();
+}
+
+<h2>Manage Course Registrations</h2>
+<p class="text-muted">Admins can register or unregister courses for a student regardless of finalization status.</p>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <h5 class="card-title">Registered Courses</h5>
+        @if (!Model.Any())
+        {
+            <p class="text-muted">No courses registered yet.</p>
+        }
+        else
+        {
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Code</th>
+                        <th>Title</th>
+                        <th>Session</th>
+                        <th>Semester</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var course in Model)
+                    {
+                        <tr>
+                            <td>@course.CourseCode</td>
+                            <td>@course.CourseTitle</td>
+                            <td>@course.Session</td>
+                            <td>@course.Semester</td>
+                            <td>
+                                <form asp-action="AdminUnregisterCourse" method="post" class="d-inline">
+                                    <input type="hidden" name="id" value="@studentId" />
+                                    <input type="hidden" name="courseId" value="@course.CourseId" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Unregister</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h5 class="card-title">Register Another Course</h5>
+        @if (!eligible.Any())
+        {
+            <p class="text-muted">No additional eligible courses available for this student's department and level.</p>
+        }
+        else
+        {
+            <form asp-action="AdminRegisterCourse" method="post" class="row g-2">
+                <input type="hidden" name="id" value="@studentId" />
+                <div class="col-md-8">
+                    <select name="courseId" class="form-control">
+                        @foreach (var course in eligible)
+                        {
+                            <option value="@course.CourseId">@course.CourseCode - @course.CourseTitle (@course.Session, @course.Semester)</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>

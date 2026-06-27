@@ -12,5 +12,6 @@ public class StudentDetailsViewModel
     public Gender? Gender { get; set; }
     public string PhoneNumber { get; set; }
     public bool IsActive { get; set; }
+    public bool IsLockedOut { get; set; }
     public StudentFormViewModel Form { get; set; }
 }

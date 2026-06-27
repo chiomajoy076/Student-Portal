@@ -7,9 +7,8 @@ public class StudentFormViewModel
 {
     public int Id { get; set; }
     
-    [Required]
     [Display(Name = "Matric Number")]
-    public string MatricNumber { get; set; }
+    public string? MatricNumber { get; set; }
     
     [Required]
     public string Department { get; set; }
@@ -18,7 +17,8 @@ public class StudentFormViewModel
     public string Level { get; set; }
     
     public string? ProfileImageBase64 { get; set; }
-    public string? UploadedDocumentBase64 { get; set; }
+    public string? DocumentFileName { get; set; }
+    public string? DocumentUrl { get; set; }
     public bool IsSubmitted { get; set; }
     public DateTime LastUpdated { get; set; }
     

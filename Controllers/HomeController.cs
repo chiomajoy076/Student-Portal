@@ -15,10 +15,38 @@ public class HomeController : Controller
 
     public IActionResult Index()
     {
+        if (User.Identity?.IsAuthenticated == true)
+        {
+            if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+
+            if (User.IsInRole("Lecturer"))
+            {
+                return RedirectToAction("Roster", "Results");
+            }
+
+            if (User.IsInRole("ExamOfficer"))
+            {
+                return RedirectToAction("UploadResult", "Results");
+            }
+
+            if (User.IsInRole("Student"))
+            {
+                return RedirectToAction("Index", "Student");
+            }
+        }
+
         return View();
     }
 
     public IActionResult Privacy()
+    {
+        return View();
+    }
+
+    public IActionResult AccessDenied()
     {
         return View();
     }
