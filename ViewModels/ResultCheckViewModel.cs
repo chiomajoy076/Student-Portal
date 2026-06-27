@@ -13,6 +13,10 @@ public class CourseResultRow
 
 public class ResultCheckViewModel
 {
+    public string FullName { get; set; }
+    public string MatricNumber { get; set; }
+    public string Department { get; set; }
+    public string Level { get; set; }
     public string Session { get; set; }
     public Semester Semester { get; set; }
     public List<CourseResultRow> Courses { get; set; } = new();

@@ -28,4 +28,7 @@ public class CourseViewModel
 
     [Required]
     public string Department { get; set; }
+
+    [Required]
+    public string Level { get; set; }
 }

@@ -10,10 +10,12 @@ namespace Student_Portal.Controllers;
 public class StudentController : Controller
 {
     private readonly IStudentService _studentService;
+    private readonly ICourseRegistrationService _courseRegistrationService;
 
-    public StudentController(IStudentService studentService)
+    public StudentController(IStudentService studentService, ICourseRegistrationService courseRegistrationService)
     {
         _studentService = studentService;
+        _courseRegistrationService = courseRegistrationService;
     }
 
     public async Task<IActionResult> Index()
@@ -110,5 +112,45 @@ public class StudentController : Controller
         }
 
         return File(pdfBytes, "application/pdf", "RegistrationSlip.pdf");
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> MyCourses()
+    {
+        var courses = await _courseRegistrationService.GetAvailableCoursesAsync(User);
+        return View(courses);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> RegisterCourse(int courseId)
+    {
+        var result = await _courseRegistrationService.RegisterAsync(User, courseId);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Course registered successfully."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(MyCourses));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> UnregisterCourse(int courseId)
+    {
+        var result = await _courseRegistrationService.UnregisterAsync(User, courseId);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Course unregistered successfully."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(MyCourses));
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SubmitRegistration(string session, Semester semester)
+    {
+        var result = await _courseRegistrationService.SubmitRegistrationAsync(User, session, semester);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? $"Course registration finalized for {session} {semester} semester."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(MyCourses));
     }
 }

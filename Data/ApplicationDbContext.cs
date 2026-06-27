@@ -17,6 +17,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     public DbSet<Result> Results { get; set; }
     public DbSet<GpaRecord> GpaRecords { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<CourseRegistration> CourseRegistrations { get; set; }
+    public DbSet<RegistrationSubmission> RegistrationSubmissions { get; set; }
+    public DbSet<LecturerDepartment> LecturerDepartments { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -77,5 +80,41 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             .WithMany()
             .HasForeignKey(a => a.UserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        builder.Entity<CourseRegistration>()
+            .HasOne(cr => cr.User)
+            .WithMany()
+            .HasForeignKey(cr => cr.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<CourseRegistration>()
+            .HasOne(cr => cr.Course)
+            .WithMany()
+            .HasForeignKey(cr => cr.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Entity<CourseRegistration>()
+            .HasIndex(cr => new { cr.UserId, cr.CourseId })
+            .IsUnique();
+
+        builder.Entity<RegistrationSubmission>()
+            .HasOne(rs => rs.User)
+            .WithMany()
+            .HasForeignKey(rs => rs.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<RegistrationSubmission>()
+            .HasIndex(rs => new { rs.UserId, rs.Session, rs.Semester })
+            .IsUnique();
+
+        builder.Entity<LecturerDepartment>()
+            .HasOne(ld => ld.User)
+            .WithMany()
+            .HasForeignKey(ld => ld.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Entity<LecturerDepartment>()
+            .HasIndex(ld => new { ld.UserId, ld.Department })
+            .IsUnique();
     }
 }

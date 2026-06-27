@@ -9,6 +9,7 @@ public class Course
     public Semester Semester { get; set; }
     public string Session { get; set; }
     public string Department { get; set; }
+    public string Level { get; set; }
 }
 
 public enum Semester

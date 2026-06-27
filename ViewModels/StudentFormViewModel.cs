@@ -7,9 +7,8 @@ public class StudentFormViewModel
 {
     public int Id { get; set; }
     
-    [Required]
     [Display(Name = "Matric Number")]
-    public string MatricNumber { get; set; }
+    public string? MatricNumber { get; set; }
     
     [Required]
     public string Department { get; set; }

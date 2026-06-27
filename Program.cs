@@ -38,6 +38,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     // Session timeout: auto sign-out after 30 minutes of inactivity.
     options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
     options.SlidingExpiration = true;
+    options.AccessDeniedPath = "/Home/AccessDenied";
 });
 
 builder.Services.AddHttpContextAccessor();
@@ -51,6 +52,9 @@ builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<IResultRepository, ResultRepository>();
 builder.Services.AddScoped<IGpaRecordRepository, GpaRecordRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+builder.Services.AddScoped<ICourseRegistrationRepository, CourseRegistrationRepository>();
+builder.Services.AddScoped<IRegistrationSubmissionRepository, RegistrationSubmissionRepository>();
+builder.Services.AddScoped<ILecturerDepartmentRepository, LecturerDepartmentRepository>();
 
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -62,6 +66,8 @@ builder.Services.AddScoped<IGpaService, GpaService>();
 builder.Services.AddScoped<IRegistrationSlipService, RegistrationSlipService>();
 builder.Services.AddScoped<IReportService, ReportService>();
 builder.Services.AddScoped<IAuditService, AuditService>();
+builder.Services.AddScoped<ICourseRegistrationService, CourseRegistrationService>();
+builder.Services.AddScoped<ILecturerService, LecturerService>();
 
 var app = builder.Build();
 
@@ -91,7 +97,7 @@ using (var scope = app.Services.CreateScope())
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
     // Create roles
-    string[] roleNames = { "SuperAdmin", "Admin", "ExamOfficer", "Student" };
+    string[] roleNames = { "SuperAdmin", "Admin", "ExamOfficer", "Lecturer", "Student" };
     foreach (var roleName in roleNames)
     {
         if (!await roleManager.RoleExistsAsync(roleName))

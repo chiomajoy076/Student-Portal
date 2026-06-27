@@ -58,19 +58,44 @@ public class StudentService : IStudentService
             return ServiceResult.Fail("Form has already been submitted.");
         }
 
+        // Matric number is never taken from user input - it's auto-assigned the first time the form is finally submitted.
+        var matricNumber = form?.MatricNumber;
+        if (model.IsSubmitted && string.IsNullOrEmpty(matricNumber))
+        {
+            matricNumber = await GenerateMatricNumberAsync();
+        }
+
         if (form == null)
         {
             form = new StudentForm { UserId = user.Id };
             ApplyToEntity(form, model);
+            form.MatricNumber = matricNumber;
             await _studentRepository.AddAsync(form);
         }
         else
         {
             ApplyToEntity(form, model);
+            form.MatricNumber = matricNumber;
         }
 
         await _studentRepository.SaveChangesAsync();
         return ServiceResult.Success();
+    }
+
+    private async Task<string> GenerateMatricNumberAsync()
+    {
+        var year = DateTime.UtcNow.Year;
+        var allForms = await _studentRepository.GetAllAsync();
+        var sequence = allForms.Count(f => !string.IsNullOrEmpty(f.MatricNumber)) + 1;
+
+        string candidate;
+        do
+        {
+            candidate = $"FUNAI/{year}/{sequence:0000}";
+            sequence++;
+        } while (await _studentRepository.GetByMatricNumberAsync(candidate) != null);
+
+        return candidate;
     }
 
     public async Task<ServiceResult> UploadDocumentAsync(ClaimsPrincipal principal, IFormFile file)
@@ -99,7 +124,6 @@ public class StudentService : IStudentService
 
     private static void ApplyToEntity(StudentForm form, StudentFormViewModel model)
     {
-        form.MatricNumber = model.MatricNumber;
         form.Department = model.Department;
         form.Level = model.Level;
         form.IsSubmitted = model.IsSubmitted;

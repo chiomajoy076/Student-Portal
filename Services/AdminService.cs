@@ -1,3 +1,4 @@
+using Student_Portal.Models;
 using Student_Portal.Repositories;
 using Student_Portal.ViewModels;
 
@@ -5,20 +6,23 @@ namespace Student_Portal.Services;
 
 public class AdminService : IAdminService
 {
-    private static readonly string[] AssignableRoles = { "Admin", "ExamOfficer", "Student" };
+    private static readonly string[] AssignableRoles = { "Admin", "ExamOfficer", "Lecturer", "Student" };
+    private static readonly string[] StaffRoles = { "Admin", "ExamOfficer", "Lecturer" };
 
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
     private readonly IDocumentService _documentService;
     private readonly IAuditService _auditService;
+    private readonly ILecturerService _lecturerService;
 
     public AdminService(IUserRepository userRepository, IStudentRepository studentRepository,
-        IDocumentService documentService, IAuditService auditService)
+        IDocumentService documentService, IAuditService auditService, ILecturerService lecturerService)
     {
         _userRepository = userRepository;
         _studentRepository = studentRepository;
         _documentService = documentService;
         _auditService = auditService;
+        _lecturerService = lecturerService;
     }
 
     public async Task<IEnumerable<StudentListViewModel>> GetStudentListAsync(string? search = null, string? status = null)
@@ -230,13 +234,19 @@ public class AdminService : IAdminService
         foreach (var user in users)
         {
             var roles = await _userRepository.GetRolesAsync(user);
+            var isLecturer = roles.Contains("Lecturer");
+
             result.Add(new UserAccountViewModel
             {
                 Id = user.Id,
                 Email = user.Email,
                 FullName = $"{user.FirstName} {user.LastName}",
                 CurrentRole = roles.FirstOrDefault() ?? "(none)",
-                IsLockedOut = await _userRepository.IsLockedOutAsync(user)
+                Roles = roles.ToList(),
+                IsLockedOut = await _userRepository.IsLockedOutAsync(user),
+                IsLecturer = isLecturer,
+                IsExamOfficer = roles.Contains("ExamOfficer"),
+                Departments = isLecturer ? await _lecturerService.GetDepartmentsAsync(user.Id) : new List<string>()
             });
         }
 
@@ -264,11 +274,103 @@ public class AdminService : IAdminService
             return ServiceResult.Fail("Cannot change the role of a Super Admin account.");
         }
 
+        // Preserve the Lecturer+ExamOfficer combo when the primary role isn't actually changing
+        // (e.g. an accidental re-submit of the dropdown shouldn't silently strip the ExamOfficer grant).
+        var keepExamOfficerCombo = newRole == "Lecturer" &&
+            currentRoles.Contains("Lecturer") && currentRoles.Contains("ExamOfficer");
+
         await _userRepository.RemoveFromRolesAsync(user, currentRoles);
         await _userRepository.AddToRoleAsync(user, newRole);
+
+        if (keepExamOfficerCombo)
+        {
+            await _userRepository.AddToRoleAsync(user, "ExamOfficer");
+        }
 
         await _auditService.LogAsync(id, $"Role changed to '{newRole}' by SuperAdmin");
 
         return ServiceResult.Success();
     }
+
+    public Task<List<string>> GetStaffRolesAsync() => Task.FromResult(StaffRoles.ToList());
+
+    public async Task<ServiceResult> CreateStaffAsync(CreateStaffViewModel model)
+    {
+        if (!StaffRoles.Contains(model.Role))
+        {
+            return ServiceResult.Fail("Invalid role selected.");
+        }
+
+        if (model.Role == "Lecturer" && (model.Departments == null || model.Departments.Count == 0))
+        {
+            return ServiceResult.Fail("Select at least one department for a Lecturer account.");
+        }
+
+        var existing = await _userRepository.FindByEmailAsync(model.Email);
+        if (existing != null)
+        {
+            return ServiceResult.Fail("Email Address already exist.");
+        }
+
+        var user = new ApplicationUser
+        {
+            UserName = model.Email,
+            Email = model.Email,
+            FirstName = model.FirstName,
+            LastName = model.LastName,
+            PhoneNumber = model.PhoneNumber,
+            IsActive = true,
+            EmailConfirmed = true
+        };
+
+        var result = await _userRepository.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
+        {
+            return ServiceResult.Fail(result.Errors.Select(e => e.Description));
+        }
+
+        await _userRepository.AddToRoleAsync(user, model.Role);
+
+        if (model.Role == "Lecturer")
+        {
+            await _lecturerService.SetDepartmentsAsync(user.Id, model.Departments!);
+
+            if (model.AlsoExamOfficer)
+            {
+                await _userRepository.AddToRoleAsync(user, "ExamOfficer");
+            }
+        }
+
+        await _auditService.LogAsync(user.Id, $"Staff account created with role '{model.Role}' by SuperAdmin");
+
+        return ServiceResult.Success();
+    }
+
+    public Task<List<string>> GetDepartmentsForLecturerAsync(string id) => _lecturerService.GetDepartmentsAsync(id);
+
+    public async Task<ServiceResult> SetLecturerDepartmentsAsync(string id, List<string> departments)
+    {
+        var user = await _userRepository.FindByIdAsync(id);
+        if (user == null)
+        {
+            return ServiceResult.Fail("Account not found.");
+        }
+
+        var roles = await _userRepository.GetRolesAsync(user);
+        if (!roles.Contains("Lecturer"))
+        {
+            return ServiceResult.Fail("Only Lecturer accounts can have departments assigned.");
+        }
+
+        if (departments.Count == 0)
+        {
+            return ServiceResult.Fail("Select at least one department.");
+        }
+
+        await _lecturerService.SetDepartmentsAsync(id, departments);
+        return ServiceResult.Success();
+    }
+
+    public Task<ServiceResult> SetExamOfficerForLecturerAsync(string id, bool enabled) =>
+        _lecturerService.SetExamOfficerAsync(id, enabled);
 }

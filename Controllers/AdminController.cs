@@ -10,11 +10,14 @@ public class AdminController : Controller
 {
     private readonly IAdminService _adminService;
     private readonly IAuditService _auditService;
+    private readonly ICourseRegistrationService _courseRegistrationService;
 
-    public AdminController(IAdminService adminService, IAuditService auditService)
+    public AdminController(IAdminService adminService, IAuditService auditService,
+        ICourseRegistrationService courseRegistrationService)
     {
         _adminService = adminService;
         _auditService = auditService;
+        _courseRegistrationService = courseRegistrationService;
     }
 
     public async Task<IActionResult> Index(string? search, string? status)
@@ -125,5 +128,106 @@ public class AdminController : Controller
     {
         var logs = await _auditService.GetRecentAsync();
         return View(logs);
+    }
+
+    [Authorize(Roles = "SuperAdmin")]
+    [HttpGet]
+    public async Task<IActionResult> CreateStaff()
+    {
+        ViewBag.StaffRoles = await _adminService.GetStaffRolesAsync();
+        return View(new CreateStaffViewModel());
+    }
+
+    [Authorize(Roles = "SuperAdmin")]
+    [HttpPost]
+    public async Task<IActionResult> CreateStaff(CreateStaffViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            ViewBag.StaffRoles = await _adminService.GetStaffRolesAsync();
+            return View(model);
+        }
+
+        var result = await _adminService.CreateStaffAsync(model);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
+            ViewBag.StaffRoles = await _adminService.GetStaffRolesAsync();
+            return View(model);
+        }
+
+        TempData["Success"] = $"Staff account created successfully with role '{model.Role}'.";
+        return RedirectToAction(nameof(Users));
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> StudentCourses(string id)
+    {
+        var registered = await _courseRegistrationService.GetRegisteredCoursesForAdminAsync(id);
+        var eligible = await _courseRegistrationService.GetEligibleCoursesForAdminAsync(id);
+
+        ViewBag.StudentId = id;
+        ViewBag.EligibleCourses = eligible.Where(c => !c.IsRegistered).ToList();
+        return View(registered);
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AdminRegisterCourse(string id, int courseId)
+    {
+        var result = await _courseRegistrationService.AdminRegisterAsync(id, courseId);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Course registered for student."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(StudentCourses), new { id });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AdminUnregisterCourse(string id, int courseId)
+    {
+        var result = await _courseRegistrationService.AdminUnregisterAsync(id, courseId);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Course unregistered for student."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(StudentCourses), new { id });
+    }
+
+    [Authorize(Roles = "SuperAdmin")]
+    [HttpGet]
+    public async Task<IActionResult> ManageLecturerDepartments(string id)
+    {
+        var current = await _adminService.GetDepartmentsForLecturerAsync(id);
+        ViewBag.LecturerId = id;
+        ViewBag.CurrentDepartments = current;
+        return View();
+    }
+
+    [Authorize(Roles = "SuperAdmin")]
+    [HttpPost]
+    public async Task<IActionResult> ManageLecturerDepartments(string id, List<string> departments)
+    {
+        var result = await _adminService.SetLecturerDepartmentsAsync(id, departments ?? new List<string>());
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Lecturer departments updated successfully."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(Users));
+    }
+
+    [Authorize(Roles = "SuperAdmin")]
+    [HttpPost]
+    public async Task<IActionResult> ToggleExamOfficerForLecturer(string id, bool enabled)
+    {
+        var result = await _adminService.SetExamOfficerForLecturerAsync(id, enabled);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? "Exam Officer access updated for lecturer."
+            : string.Join(" ", result.Errors);
+
+        return RedirectToAction(nameof(Users));
     }
 }

@@ -14,10 +14,13 @@ public class ResultService : IResultService
     private readonly IGpaService _gpaService;
     private readonly IGpaRecordRepository _gpaRecordRepository;
     private readonly IAuditService _auditService;
+    private readonly ICourseRegistrationRepository _courseRegistrationRepository;
+    private readonly IUserRepository _userRepository;
 
     public ResultService(IResultRepository resultRepository, ICourseRepository courseRepository,
         IStudentRepository studentRepository, IGpaService gpaService, IGpaRecordRepository gpaRecordRepository,
-        IAuditService auditService)
+        IAuditService auditService, ICourseRegistrationRepository courseRegistrationRepository,
+        IUserRepository userRepository)
     {
         _resultRepository = resultRepository;
         _courseRepository = courseRepository;
@@ -25,9 +28,11 @@ public class ResultService : IResultService
         _gpaService = gpaService;
         _gpaRecordRepository = gpaRecordRepository;
         _auditService = auditService;
+        _courseRegistrationRepository = courseRegistrationRepository;
+        _userRepository = userRepository;
     }
 
-    public async Task<ServiceResult> UploadSingleResultAsync(ResultUploadViewModel model)
+    public async Task<ServiceResult> UploadSingleResultAsync(ResultUploadViewModel model, List<string>? allowedDepartments = null)
     {
         var student = await _studentRepository.GetByMatricNumberAsync(model.MatricNumber);
         if (student == null)
@@ -41,9 +46,19 @@ public class ResultService : IResultService
             return ServiceResult.Fail("Selected course was not found.");
         }
 
+        if (allowedDepartments != null && !allowedDepartments.Contains(course.Department, StringComparer.OrdinalIgnoreCase))
+        {
+            return ServiceResult.Fail("You are not authorized to upload results for this course's department.");
+        }
+
         if (await _resultRepository.ExistsAsync(student.UserId, course.Id))
         {
             return ServiceResult.Fail($"A result for '{model.MatricNumber}' in '{course.CourseCode}' already exists.");
+        }
+
+        if (!await _courseRegistrationRepository.ExistsAsync(student.UserId, course.Id))
+        {
+            return ServiceResult.Fail($"'{model.MatricNumber}' is not registered for course '{course.CourseCode}'.");
         }
 
         var result = new Result
@@ -64,7 +79,7 @@ public class ResultService : IResultService
         return ServiceResult.Success();
     }
 
-    public async Task<ResultImportSummaryViewModel> ImportFromCsvAsync(IFormFile file)
+    public async Task<ResultImportSummaryViewModel> ImportFromCsvAsync(IFormFile file, List<string>? allowedDepartments = null)
     {
         var summary = new ResultImportSummaryViewModel();
 
@@ -117,10 +132,22 @@ public class ResultService : IResultService
                 continue;
             }
 
+            if (allowedDepartments != null && !allowedDepartments.Contains(course.Department, StringComparer.OrdinalIgnoreCase))
+            {
+                summary.RowErrors.Add($"Row {rowNumber}: not authorized to upload results for course '{row.CourseCode}'.");
+                continue;
+            }
+
             if (await _resultRepository.ExistsAsync(student.UserId, course.Id) ||
                 !seenInBatch.Add((student.UserId, course.Id)))
             {
                 summary.RowErrors.Add($"Row {rowNumber}: result for '{row.MatricNumber}' in '{row.CourseCode}' already exists.");
+                continue;
+            }
+
+            if (!await _courseRegistrationRepository.ExistsAsync(student.UserId, course.Id))
+            {
+                summary.RowErrors.Add($"Row {rowNumber}: '{row.MatricNumber}' is not registered for course '{row.CourseCode}'.");
                 continue;
             }
 
@@ -175,9 +202,15 @@ public class ResultService : IResultService
         }
 
         var gpaRecord = await _gpaRecordRepository.GetByUserSessionSemesterAsync(userId, session, semester);
+        var user = await _userRepository.FindByIdAsync(userId);
+        var form = await _studentRepository.GetByUserIdAsync(userId);
 
         return new ResultCheckViewModel
         {
+            FullName = user == null ? "" : $"{user.FirstName} {user.LastName}",
+            MatricNumber = form?.MatricNumber ?? "",
+            Department = form?.Department ?? "",
+            Level = form?.Level ?? "",
             Session = session,
             Semester = semester,
             GPA = gpaRecord?.GPA ?? 0,

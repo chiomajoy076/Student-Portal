@@ -19,6 +19,7 @@
 
         <div class="d-flex gap-2">
             <a asp-action="EditStudent" asp-route-id="@Model.Id" class="btn btn-secondary">Edit Record</a>
+            <a asp-action="StudentCourses" asp-route-id="@Model.Id" class="btn btn-secondary">Manage Courses</a>
 
             <form asp-action="ToggleActivation" method="post" class="d-inline">
                 <input type="hidden" name="id" value="@Model.Id" />

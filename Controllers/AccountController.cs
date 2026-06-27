@@ -58,7 +58,8 @@ public class AccountController : Controller
                 if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
                     return Redirect(returnUrl);
 
-                return RedirectToAction("Index", "Admin");
+                // Home/Index redirects to the right dashboard based on the signed-in user's role.
+                return RedirectToAction("Index", "Home");
             }
 
             foreach (var error in result.Errors)

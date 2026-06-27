@@ -14,4 +14,9 @@ public interface IAdminService
     Task<List<UserAccountViewModel>> GetAllUsersAsync();
     Task<List<string>> GetAssignableRolesAsync();
     Task<ServiceResult> ChangeRoleAsync(string id, string newRole);
+    Task<List<string>> GetStaffRolesAsync();
+    Task<ServiceResult> CreateStaffAsync(CreateStaffViewModel model);
+    Task<List<string>> GetDepartmentsForLecturerAsync(string id);
+    Task<ServiceResult> SetLecturerDepartmentsAsync(string id, List<string> departments);
+    Task<ServiceResult> SetExamOfficerForLecturerAsync(string id, bool enabled);
 }

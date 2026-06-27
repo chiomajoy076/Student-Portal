@@ -64,8 +64,10 @@ public class AccountService : IAccountService
 
         var isAdmin = await _userRepository.IsInRoleAsync(user, "Admin");
         var isSuperAdmin = await _userRepository.IsInRoleAsync(user, "SuperAdmin");
+        var isExamOfficer = await _userRepository.IsInRoleAsync(user, "ExamOfficer");
+        var isLecturer = await _userRepository.IsInRoleAsync(user, "Lecturer");
 
-        if (!isAdmin && !isSuperAdmin)
+        if (!isAdmin && !isSuperAdmin && !isExamOfficer && !isLecturer)
         {
             await _auditService.LogAsync(user.Id, "Attempted admin login without admin role");
             return ServiceResult.Fail("You are not authorized to access admin area.");

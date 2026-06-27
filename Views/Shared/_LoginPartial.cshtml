@@ -6,6 +6,24 @@
     @if (SignInManager.IsSignedIn(User))
     {
         <li class="nav-item">
+            @if (User.IsInRole("SuperAdmin") || User.IsInRole("Admin"))
+            {
+                <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Dashboard</a>
+            }
+            else if (User.IsInRole("Lecturer"))
+            {
+                <a class="nav-link text-dark" asp-controller="Results" asp-action="Roster">Dashboard</a>
+            }
+            else if (User.IsInRole("ExamOfficer"))
+            {
+                <a class="nav-link text-dark" asp-controller="Results" asp-action="UploadResult">Dashboard</a>
+            }
+            else if (User.IsInRole("Student"))
+            {
+                <a class="nav-link text-dark" asp-controller="Student" asp-action="Index">Dashboard</a>
+            }
+        </li>
+        <li class="nav-item">
             <span class="nav-link text-dark">Hello @User.Identity?.Name!</span>
         </li>
         <li class="nav-item">

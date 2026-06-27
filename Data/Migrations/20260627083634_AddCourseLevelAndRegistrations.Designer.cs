@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Student_Portal.Data;
 
@@ -11,9 +12,11 @@ using Student_Portal.Data;
 namespace Student_Portal.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260627083634_AddCourseLevelAndRegistrations")]
+    partial class AddCourseLevelAndRegistrations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -399,58 +402,6 @@ namespace Student_Portal.Data.Migrations
                     b.ToTable("GpaRecords");
                 });
 
-            modelBuilder.Entity("Student_Portal.Models.LecturerDepartment", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Department")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "Department")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL AND [Department] IS NOT NULL");
-
-                    b.ToTable("LecturerDepartments");
-                });
-
-            modelBuilder.Entity("Student_Portal.Models.RegistrationSubmission", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("Semester")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Session")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.Property<DateTime>("SubmittedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId", "Session", "Semester")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL AND [Session] IS NOT NULL");
-
-                    b.ToTable("RegistrationSubmissions");
-                });
-
             modelBuilder.Entity("Student_Portal.Models.Result", b =>
                 {
                     b.Property<int>("Id")
@@ -647,26 +598,6 @@ namespace Student_Portal.Data.Migrations
                 });
 
             modelBuilder.Entity("Student_Portal.Models.GpaRecord", b =>
-                {
-                    b.HasOne("Student_Portal.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Student_Portal.Models.LecturerDepartment", b =>
-                {
-                    b.HasOne("Student_Portal.Models.ApplicationUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Student_Portal.Models.RegistrationSubmission", b =>
                 {
                     b.HasOne("Student_Portal.Models.ApplicationUser", "User")
                         .WithMany()
