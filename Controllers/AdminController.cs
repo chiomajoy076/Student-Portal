@@ -20,9 +20,9 @@ public class AdminController : Controller
         _courseRegistrationService = courseRegistrationService;
     }
 
-    public async Task<IActionResult> Index(string? search, string? status)
+    public async Task<IActionResult> Index(string? search, string? status, int page = 1)
     {
-        var viewModel = await _adminService.GetStudentListAsync(search, status);
+        var viewModel = await _adminService.GetStudentListAsync(search, status, page);
         ViewBag.Search = search;
         ViewBag.Status = status;
         return View(viewModel);
@@ -104,9 +104,9 @@ public class AdminController : Controller
     }
 
     [Authorize(Roles = "SuperAdmin")]
-    public async Task<IActionResult> Users()
+    public async Task<IActionResult> Users(int page = 1)
     {
-        var users = await _adminService.GetAllUsersAsync();
+        var users = await _adminService.GetAllUsersAsync(page);
         ViewBag.AssignableRoles = await _adminService.GetAssignableRolesAsync();
         return View(users);
     }
@@ -124,9 +124,9 @@ public class AdminController : Controller
     }
 
     [Authorize(Roles = "SuperAdmin")]
-    public async Task<IActionResult> AuditLogs()
+    public async Task<IActionResult> AuditLogs(int page = 1, string? email = null)
     {
-        var logs = await _auditService.GetRecentAsync();
+        var logs = await _auditService.GetPagedAsync(page, emailFilter: email);
         return View(logs);
     }
 

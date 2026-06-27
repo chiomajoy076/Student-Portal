@@ -20,27 +20,27 @@ public class ResultsController : Controller
         _lecturerService = lecturerService;
     }
 
-    public async Task<IActionResult> Courses()
+    public async Task<IActionResult> Courses(int page = 1)
     {
         var allowed = await _lecturerService.GetAccessibleDepartmentsAsync(User);
-        var courses = await _courseService.GetAllAsync(allowed);
+        var courses = await _courseService.GetPagedAsync(allowed, page);
         ViewBag.AllowedDepartments = allowed;
         return View(courses);
     }
 
     [HttpPost]
-    public async Task<IActionResult> AddCourse(CourseViewModel model)
+    public async Task<IActionResult> AddCourse(BulkCourseViewModel model)
     {
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || model.Rows.Count == 0)
         {
             TempData["Error"] = "Please fill in all required course fields correctly.";
             return RedirectToAction(nameof(Courses));
         }
 
         var allowed = await _lecturerService.GetAccessibleDepartmentsAsync(User);
-        var result = await _courseService.AddAsync(model, allowed);
+        var result = await _courseService.AddManyAsync(model, allowed);
         TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-            ? "Course added successfully."
+            ? (model.Rows.Count == 1 ? "Course added successfully." : $"{model.Rows.Count} courses added successfully.")
             : string.Join(" ", result.Errors);
 
         return RedirectToAction(nameof(Courses));
@@ -76,37 +76,64 @@ public class ResultsController : Controller
         return RedirectToAction(nameof(Courses));
     }
 
-    public async Task<IActionResult> UploadResult()
+    public IActionResult UploadResult()
     {
+        return View(new BulkResultUploadViewModel());
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetFillableCourses(string matricNumber)
+    {
+        if (string.IsNullOrWhiteSpace(matricNumber))
+        {
+            return Json(new { found = false, error = "Enter a matric number." });
+        }
+
         var allowed = await _lecturerService.GetAccessibleDepartmentsAsync(User);
-        ViewBag.Courses = await _courseService.GetAllAsync(allowed);
-        return View(new ResultUploadViewModel());
+        var (found, error, courses) = await _resultService.GetFillableCoursesAsync(matricNumber, allowed);
+
+        if (!found)
+        {
+            return Json(new { found = false, error });
+        }
+
+        if (courses.Count == 0)
+        {
+            return Json(new { found = true, error = "This student has no registered courses awaiting results.", courses = Array.Empty<object>() });
+        }
+
+        return Json(new
+        {
+            found = true,
+            error = (string?)null,
+            courses = courses.Select(c => new
+            {
+                c.CourseId,
+                c.CourseCode,
+                c.CourseTitle,
+                c.CreditUnit,
+                c.Session,
+                c.Semester
+            })
+        });
     }
 
     [HttpPost]
-    public async Task<IActionResult> UploadResult(ResultUploadViewModel model)
+    public async Task<IActionResult> UploadResult(BulkResultUploadViewModel model)
     {
         var allowed = await _lecturerService.GetAccessibleDepartmentsAsync(User);
 
-        if (!ModelState.IsValid)
+        if (!ModelState.IsValid || model.Rows.Count == 0)
         {
-            ViewBag.Courses = await _courseService.GetAllAsync(allowed);
-            return View(model);
+            TempData["Error"] = "Please select a matric number and enter at least one score.";
+            return RedirectToAction(nameof(UploadResult));
         }
 
-        var result = await _resultService.UploadSingleResultAsync(model, allowed);
-        if (!result.Succeeded)
-        {
-            foreach (var error in result.Errors)
-            {
-                ModelState.AddModelError(string.Empty, error);
-            }
+        var result = await _resultService.UploadManyResultsAsync(model, allowed);
+        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
+            ? (model.Rows.Count == 1 ? "Result uploaded successfully." : $"{model.Rows.Count} results uploaded successfully.")
+            : string.Join(" ", result.Errors);
 
-            ViewBag.Courses = await _courseService.GetAllAsync(allowed);
-            return View(model);
-        }
-
-        TempData["Success"] = "Result uploaded successfully.";
         return RedirectToAction(nameof(UploadResult));
     }
 
@@ -139,10 +166,10 @@ public class ResultsController : Controller
         return View("ImportResultsSummary", summary);
     }
 
-    public async Task<IActionResult> Roster()
+    public async Task<IActionResult> Roster(int page = 1)
     {
         var allowed = await _lecturerService.GetAccessibleDepartmentsAsync(User);
-        var roster = await _lecturerService.GetCourseRosterAsync(allowed);
+        var roster = await _lecturerService.GetCourseRosterAsync(allowed, page);
         return View(roster);
     }
 }

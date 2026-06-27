@@ -25,7 +25,7 @@ public class AdminService : IAdminService
         _lecturerService = lecturerService;
     }
 
-    public async Task<IEnumerable<StudentListViewModel>> GetStudentListAsync(string? search = null, string? status = null)
+    public async Task<PagedResult<StudentListViewModel>> GetStudentListAsync(string? search = null, string? status = null, int page = 1, int pageSize = 20)
     {
         var students = await _userRepository.GetUsersInRoleAsync("Student");
         var forms = await _studentRepository.GetAllAsync();
@@ -63,7 +63,16 @@ public class AdminService : IAdminService
             list = list.Where(s => !s.IsActive);
         }
 
-        return list.ToList();
+        var materialized = list.ToList();
+        if (page < 1) page = 1;
+
+        return new PagedResult<StudentListViewModel>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = materialized.Count,
+            Items = materialized.Skip((page - 1) * pageSize).Take(pageSize).ToList()
+        };
     }
 
     public async Task<StudentDetailsViewModel?> GetStudentDetailsAsync(string id)
@@ -226,12 +235,15 @@ public class AdminService : IAdminService
         return ServiceResult.Fail(result.Errors.Select(e => e.Description));
     }
 
-    public async Task<List<UserAccountViewModel>> GetAllUsersAsync()
+    public async Task<PagedResult<UserAccountViewModel>> GetAllUsersAsync(int page = 1, int pageSize = 20)
     {
-        var users = await _userRepository.GetAllUsersAsync();
+        var allUsers = await _userRepository.GetAllUsersAsync();
+        if (page < 1) page = 1;
+
+        var pageUsers = allUsers.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var result = new List<UserAccountViewModel>();
 
-        foreach (var user in users)
+        foreach (var user in pageUsers)
         {
             var roles = await _userRepository.GetRolesAsync(user);
             var isLecturer = roles.Contains("Lecturer");
@@ -250,7 +262,13 @@ public class AdminService : IAdminService
             });
         }
 
-        return result;
+        return new PagedResult<UserAccountViewModel>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = allUsers.Count,
+            Items = result
+        };
     }
 
     public Task<List<string>> GetAssignableRolesAsync() => Task.FromResult(AssignableRoles.ToList());

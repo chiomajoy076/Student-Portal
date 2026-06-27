@@ -26,4 +26,25 @@ public class AuditLogRepository : IAuditLogRepository
             .OrderByDescending(a => a.Timestamp)
             .Take(count)
             .ToListAsync();
+
+    public async Task<(List<AuditLog> Items, int TotalCount)> GetPagedAsync(int page, int pageSize, string? emailFilter = null)
+    {
+        var query = _context.AuditLogs
+            .Include(a => a.User)
+            .OrderByDescending(a => a.Timestamp)
+            .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(emailFilter))
+        {
+            query = query.Where(a => a.User != null && a.User.Email != null && a.User.Email.Contains(emailFilter));
+        }
+
+        var totalCount = await query.CountAsync();
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync();
+
+        return (items, totalCount);
+    }
 }

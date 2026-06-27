@@ -47,7 +47,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var course in Model.Courses)
+        @foreach (var course in Model.PagedCourses)
         {
             <tr>
                 <td>@course.CourseCode</td>
@@ -63,3 +63,16 @@
         }
     </tbody>
 </table>
+
+<partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
+{
+    Page = Model.Page,
+    TotalPages = Model.TotalPages,
+    Action = "ResultStatistics",
+    RouteValues = new Dictionary<string, string>
+    {
+        ["session"] = Model.Session ?? "",
+        ["semester"] = Model.Semester ?? "",
+        ["department"] = Model.Department ?? ""
+    }
+})" />

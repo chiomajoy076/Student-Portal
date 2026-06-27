@@ -37,6 +37,20 @@ public class CourseService : ICourseService
         }).ToList();
     }
 
+    public async Task<PagedResult<CourseViewModel>> GetPagedAsync(List<string>? allowedDepartments = null, int page = 1, int pageSize = 20)
+    {
+        var all = await GetAllAsync(allowedDepartments);
+        if (page < 1) page = 1;
+
+        return new PagedResult<CourseViewModel>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = all.Count,
+            Items = all.Skip((page - 1) * pageSize).Take(pageSize).ToList()
+        };
+    }
+
     public async Task<CourseViewModel?> GetByIdAsync(int id)
     {
         var course = await _courseRepository.GetByIdAsync(id);
@@ -84,6 +98,57 @@ public class CourseService : ICourseService
 
         await _courseRepository.AddAsync(course);
         await _courseRepository.SaveChangesAsync();
+
+        return ServiceResult.Success();
+    }
+
+    public async Task<ServiceResult> AddManyAsync(BulkCourseViewModel model, List<string>? allowedDepartments = null)
+    {
+        if (allowedDepartments != null && !allowedDepartments.Contains(model.Department, StringComparer.OrdinalIgnoreCase))
+        {
+            return ServiceResult.Fail("You are not authorized to add courses for this department.");
+        }
+
+        var errors = new List<string>();
+        var addedCount = 0;
+
+        foreach (var row in model.Rows)
+        {
+            if (string.IsNullOrWhiteSpace(row.CourseCode) && string.IsNullOrWhiteSpace(row.CourseTitle))
+            {
+                continue;
+            }
+
+            var result = await AddAsync(new CourseViewModel
+            {
+                CourseCode = row.CourseCode,
+                CourseTitle = row.CourseTitle,
+                CreditUnit = row.CreditUnit,
+                Semester = model.Semester,
+                Session = model.Session,
+                Department = model.Department,
+                Level = model.Level
+            }, allowedDepartments);
+
+            if (result.Succeeded)
+            {
+                addedCount++;
+            }
+            else
+            {
+                errors.Add($"{row.CourseCode}: {string.Join(" ", result.Errors)}");
+            }
+        }
+
+        if (addedCount == 0 && errors.Count > 0)
+        {
+            return ServiceResult.Fail(errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            return ServiceResult.Fail(new[] { $"{addedCount} course(s) added. Some rows failed:" }.Concat(errors));
+        }
 
         return ServiceResult.Success();
     }

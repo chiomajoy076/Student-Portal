@@ -43,4 +43,26 @@ public class AuditService : IAuditService
             IPAddress = l.IPAddress
         }).ToList();
     }
+
+    public async Task<PagedAuditLogViewModel> GetPagedAsync(int page, int pageSize = 20, string? emailFilter = null)
+    {
+        if (page < 1) page = 1;
+
+        var (items, totalCount) = await _auditLogRepository.GetPagedAsync(page, pageSize, emailFilter);
+
+        return new PagedAuditLogViewModel
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = totalCount,
+            EmailFilter = emailFilter,
+            Items = items.Select(l => new AuditLogViewModel
+            {
+                Action = l.Action,
+                UserEmail = l.User?.Email,
+                Timestamp = l.Timestamp,
+                IPAddress = l.IPAddress
+            }).ToList()
+        };
+    }
 }
