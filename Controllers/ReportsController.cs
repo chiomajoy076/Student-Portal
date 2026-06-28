@@ -15,9 +15,9 @@ public class ReportsController : Controller
         _reportService = reportService;
     }
 
-    public async Task<IActionResult> RegistrationReport(string? department)
+    public async Task<IActionResult> RegistrationReport(string? department, int page = 1)
     {
-        var report = await _reportService.GetRegistrationReportAsync(department);
+        var report = await _reportService.GetRegistrationReportAsync(department, page);
         return View(report);
     }
 
@@ -35,9 +35,9 @@ public class ReportsController : Controller
         return File(excel, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "RegistrationReport.xlsx");
     }
 
-    public async Task<IActionResult> ResultStatistics(string? session, Semester? semester, string? department)
+    public async Task<IActionResult> ResultStatistics(string? session, Semester? semester, string? department, int page = 1)
     {
-        var report = await _reportService.GetResultStatisticsAsync(session, semester, department);
+        var report = await _reportService.GetResultStatisticsAsync(session, semester, department, page);
         return View(report);
     }
 

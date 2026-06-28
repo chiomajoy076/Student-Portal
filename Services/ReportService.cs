@@ -24,7 +24,7 @@ public class ReportService : IReportService
         _resultRepository = resultRepository;
     }
 
-    public async Task<RegistrationReportViewModel> GetRegistrationReportAsync(string? department)
+    public async Task<RegistrationReportViewModel> GetRegistrationReportAsync(string? department, int page = 1, int pageSize = 20)
     {
         var students = await _userRepository.GetUsersInRoleAsync("Student");
         var forms = await _studentRepository.GetAllAsync();
@@ -54,13 +54,15 @@ public class ReportService : IReportService
             DepartmentFilter = department,
             Rows = rows,
             TotalCount = rows.Count,
+            Page = page < 1 ? 1 : page,
+            PageSize = pageSize,
             CountsByDepartment = rows
                 .GroupBy(r => r.Department ?? "(none)")
                 .ToDictionary(g => g.Key, g => g.Count())
         };
     }
 
-    public async Task<ResultStatisticsViewModel> GetResultStatisticsAsync(string? session, Semester? semester, string? department)
+    public async Task<ResultStatisticsViewModel> GetResultStatisticsAsync(string? session, Semester? semester, string? department, int page = 1, int pageSize = 20)
     {
         var results = await _resultRepository.GetAllAsync();
 
@@ -92,7 +94,9 @@ public class ReportService : IReportService
             Session = session,
             Semester = semester?.ToString(),
             Department = department,
-            Courses = courses
+            Courses = courses,
+            Page = page < 1 ? 1 : page,
+            PageSize = pageSize
         };
     }
 

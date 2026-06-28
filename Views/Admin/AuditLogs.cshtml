@@ -1,11 +1,25 @@
-@model List<Student_Portal.ViewModels.AuditLogViewModel>
+@model Student_Portal.ViewModels.PagedAuditLogViewModel
 @{
     ViewData["Title"] = "Audit Logs";
     Layout = "_AdminLayout";
 }
 
 <h2>Audit Logs</h2>
-<p class="text-muted">Showing the most recent @Model.Count activity log entries.</p>
+<p class="text-muted">
+    Showing @Model.Items.Count of @Model.TotalCount activity log entries
+    (page @Model.Page of @Math.Max(Model.TotalPages, 1)).
+</p>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-md-4">
+        <input type="text" name="email" value="@Model.EmailFilter" class="form-control"
+               placeholder="Filter by email" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary">Filter</button>
+        <a asp-action="AuditLogs" class="btn btn-secondary">Reset</a>
+    </div>
+</form>
 
 <table class="table table-striped">
     <thead>
@@ -17,7 +31,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var log in Model)
+        @foreach (var log in Model.Items)
         {
             <tr>
                 <td>@log.Timestamp.ToString("yyyy-MM-dd HH:mm:ss")</td>
@@ -28,3 +42,11 @@
         }
     </tbody>
 </table>
+
+<partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
+{
+    Page = Model.Page,
+    TotalPages = Model.TotalPages,
+    Action = "AuditLogs",
+    RouteValues = new Dictionary<string, string> { ["email"] = Model.EmailFilter ?? "" }
+})" />

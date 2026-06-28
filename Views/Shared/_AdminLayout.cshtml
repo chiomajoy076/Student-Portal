@@ -30,6 +30,18 @@
                             <a class="nav-link text-dark" asp-controller="Admin" asp-action="Index">Dashboard</a>
                         </li>
                     }
+                    else if (User.IsInRole("Lecturer"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Results" asp-action="Roster">Dashboard</a>
+                        </li>
+                    }
+                    else if (User.IsInRole("ExamOfficer"))
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link text-dark" asp-controller="Results" asp-action="UploadResult">Dashboard</a>
+                        </li>
+                    }
                     <li class="nav-item">
                         <a class="nav-link text-dark" asp-controller="Results" asp-action="Courses">Courses</a>
                     </li>
@@ -64,7 +76,7 @@
     </nav>
 </header>
 
-<div class="container">
+<div class="container py-4">
     @if (TempData["Success"] != null)
     {
         <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
