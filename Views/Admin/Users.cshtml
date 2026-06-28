@@ -12,6 +12,7 @@
 </p>
 <a asp-action="CreateStaff" class="btn btn-primary mb-3">Create Staff Account</a>
 
+<div class="table-responsive">
 <table class="table">
     <thead>
         <tr>
@@ -21,7 +22,7 @@
             <th>Departments</th>
             <th>Lock Status</th>
             <th>Change Role</th>
-            <th>Lecturer Options</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
@@ -53,24 +54,16 @@
                     }
                 </td>
                 <td>
-                    @if (user.IsLecturer)
+                    @if (user.CurrentRole != "SuperAdmin" && user.CurrentRole != "Student")
                     {
-                        <a asp-action="ManageLecturerDepartments" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary mb-1">
-                            Departments
-                        </a>
-                        <form asp-action="ToggleExamOfficerForLecturer" method="post" class="d-inline">
-                            <input type="hidden" name="id" value="@user.Id" />
-                            <input type="hidden" name="enabled" value="@(!user.IsExamOfficer)" />
-                            <button type="submit" class="btn btn-sm btn-outline-primary">
-                                @(user.IsExamOfficer ? "Revoke" : "Grant") Exam Officer
-                            </button>
-                        </form>
+                        <a asp-action="EditStaff" asp-route-id="@user.Id" class="btn btn-sm btn-outline-secondary">Edit</a>
                     }
                 </td>
             </tr>
         }
     </tbody>
 </table>
+</div>
 
 <partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
 {

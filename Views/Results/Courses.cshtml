@@ -65,6 +65,7 @@
                 </div>
             </div>
 
+            <div class="table-responsive">
             <table class="table table-sm mb-2" id="course-rows-table">
                 <thead>
                     <tr>
@@ -85,6 +86,7 @@
                     </tr>
                 </tbody>
             </table>
+            </div>
 
             <button type="button" id="add-row-btn" class="btn btn-sm btn-outline-secondary mb-3">+ Add Another Course</button>
             <div>
@@ -132,6 +134,7 @@
     </script>
 }
 
+<div class="table-responsive">
 <table class="table table-striped">
     <thead>
         <tr>
@@ -169,6 +172,7 @@
         }
     </tbody>
 </table>
+</div>
 
 <partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
 {

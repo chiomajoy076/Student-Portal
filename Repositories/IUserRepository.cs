@@ -21,4 +21,6 @@ public interface IUserRepository
     Task<bool> IsLockedOutAsync(ApplicationUser user);
     Task<IdentityResult> SetLockoutEndDateAsync(ApplicationUser user, DateTimeOffset? lockoutEnd);
     Task<IdentityResult> SetLockoutEnabledAsync(ApplicationUser user, bool enabled);
+    Task<string> GeneratePasswordResetTokenAsync(ApplicationUser user);
+    Task<IdentityResult> ResetPasswordAsync(ApplicationUser user, string token, string newPassword);
 }

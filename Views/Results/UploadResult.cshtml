@@ -23,6 +23,7 @@
 
         <form asp-action="UploadResult" method="post" id="upload-result-form" class="d-none">
             <input type="hidden" name="MatricNumber" id="matric-hidden" />
+            <div class="table-responsive">
             <table class="table table-sm mb-3">
                 <thead>
                     <tr>
@@ -33,6 +34,7 @@
                 </thead>
                 <tbody id="course-rows-body"></tbody>
             </table>
+            </div>
             <button type="submit" class="btn btn-primary">Save Result(s)</button>
             <a asp-action="ImportResults" class="btn btn-secondary">Bulk Import (CSV)</a>
         </form>

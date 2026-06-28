@@ -132,6 +132,16 @@ using (var scope = app.Services.CreateScope())
             await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
         }
     }
+
+    // ExamOfficer is no longer a standalone role - it's only granted as an add-on to Lecturer.
+    // Backfill any account that ended up with ExamOfficer but not Lecturer (idempotent, safe to run every startup).
+    foreach (var user in await userManager.GetUsersInRoleAsync("ExamOfficer"))
+    {
+        if (!await userManager.IsInRoleAsync(user, "Lecturer"))
+        {
+            await userManager.AddToRoleAsync(user, "Lecturer");
+        }
+    }
 }
 
 app.Run();

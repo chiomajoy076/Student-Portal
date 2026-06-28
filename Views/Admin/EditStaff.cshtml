@@ -1,0 +1,71 @@
+@model Student_Portal.ViewModels.EditStaffViewModel
+@using Student_Portal.Models
+@{
+    ViewData["Title"] = "Edit Staff Account";
+    Layout = "_AdminLayout";
+}
+
+<div class="form-page-wrapper">
+    <div class="card form-card">
+        <div class="card-body">
+            <h2>Edit Staff Account</h2>
+            <p class="text-muted">@Model.Email &middot; @Model.CurrentRole</p>
+
+            <div asp-validation-summary="All" class="text-danger"></div>
+
+            <form asp-action="EditStaff" method="post" class="row g-3">
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="Email" />
+                <input type="hidden" asp-for="CurrentRole" />
+                <input type="hidden" asp-for="IsLecturer" />
+
+                <div class="col-md-6 form-group">
+                    <label asp-for="FirstName"></label>
+                    <input asp-for="FirstName" class="form-control" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 form-group">
+                    <label asp-for="LastName"></label>
+                    <input asp-for="LastName" class="form-control" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+                <div class="col-md-6 form-group">
+                    <label asp-for="PhoneNumber"></label>
+                    <input asp-for="PhoneNumber" class="form-control" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+
+                @if (Model.IsLecturer)
+                {
+                    <div class="col-12">
+                        <label>Departments</label>
+                        <div class="row">
+                            @foreach (var dept in Departments.All)
+                            {
+                                <div class="col-md-3 form-check">
+                                    <input type="checkbox" name="Departments" value="@dept" class="form-check-input"
+                                           id="dept-@dept.Replace(" ", "")" checked="@(Model.Departments.Contains(dept) ? "checked" : null)" />
+                                    <label class="form-check-label" for="dept-@dept.Replace(" ", "")">@dept</label>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    <div class="col-12 form-check mt-2">
+                        <input type="checkbox" asp-for="AlsoExamOfficer" class="form-check-input" />
+                        <label class="form-check-label" asp-for="AlsoExamOfficer"></label>
+                    </div>
+                }
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary mt-2">Save Changes</button>
+                    <a asp-action="Users" class="btn btn-secondary mt-2">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,10 +1,35 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Home";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome!!!</h1>
-    <h1 class="display-4">Faculty of Management Science</h1>
-    <h3 class="display-4">Alex Ekwueme Federal University, Ndufu-Alike, Ebonyi State</h3>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="hero">
+    <div class="hero-icon">&#127891;</div>
+    <h1>Faculty of Management Science</h1>
+    <p class="hero-subtitle">Alex Ekwueme Federal University, Ndufu-Alike, Ebonyi State</p>
+    <p class="hero-tagline">Register courses, manage results and track academic progress &mdash; all in one place.</p>
+    <div class="hero-actions">
+        <a asp-controller="Account" asp-action="StudentLogin" class="btn btn-primary btn-lg">Student Login</a>
+        <a asp-controller="Account" asp-action="AdminLogin" class="btn btn-outline-primary btn-lg">Staff / Admin Login</a>
+    </div>
+    <p class="hero-register">
+        New student? <a asp-controller="Account" asp-action="StudentRegister">Register here</a>
+    </p>
+</div>
+
+<div class="feature-grid">
+    <div class="card feature-card">
+        <div class="feature-icon">&#128221;</div>
+        <h5>Course Registration</h5>
+        <p class="text-muted mb-0">Fill your registration form and register courses for the session in a few clicks.</p>
+    </div>
+    <div class="card feature-card">
+        <div class="feature-icon">&#128202;</div>
+        <h5>Results &amp; GPA</h5>
+        <p class="text-muted mb-0">Check your results, GPA and CGPA per semester as soon as they're released.</p>
+    </div>
+    <div class="card feature-card">
+        <div class="feature-icon">&#127979;</div>
+        <h5>Staff Tools</h5>
+        <p class="text-muted mb-0">Lecturers and admins manage courses, upload results and track registrations.</p>
+    </div>
 </div>

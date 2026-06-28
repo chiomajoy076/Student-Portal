@@ -16,7 +16,6 @@ public interface IAdminService
     Task<ServiceResult> ChangeRoleAsync(string id, string newRole);
     Task<List<string>> GetStaffRolesAsync();
     Task<ServiceResult> CreateStaffAsync(CreateStaffViewModel model);
-    Task<List<string>> GetDepartmentsForLecturerAsync(string id);
-    Task<ServiceResult> SetLecturerDepartmentsAsync(string id, List<string> departments);
-    Task<ServiceResult> SetExamOfficerForLecturerAsync(string id, bool enabled);
+    Task<EditStaffViewModel?> GetEditStaffAsync(string id);
+    Task<ServiceResult> UpdateStaffAsync(EditStaffViewModel model);
 }
