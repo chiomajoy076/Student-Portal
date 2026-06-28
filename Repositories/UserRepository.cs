@@ -47,4 +47,10 @@ public class UserRepository : IUserRepository
 
     public Task<IdentityResult> SetLockoutEnabledAsync(ApplicationUser user, bool enabled) =>
         _userManager.SetLockoutEnabledAsync(user, enabled);
+
+    public Task<string> GeneratePasswordResetTokenAsync(ApplicationUser user) =>
+        _userManager.GeneratePasswordResetTokenAsync(user);
+
+    public Task<IdentityResult> ResetPasswordAsync(ApplicationUser user, string token, string newPassword) =>
+        _userManager.ResetPasswordAsync(user, token, newPassword);
 }

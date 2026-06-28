@@ -83,6 +83,38 @@ body > div.container {
   filter: invert(1);
 }
 
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    margin-top: 0.75rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .navbar-collapse .navbar-nav {
+    width: 100%;
+  }
+
+  .navbar-collapse .nav-item {
+    width: 100%;
+  }
+
+  .navbar-collapse .nav-link,
+  .navbar-collapse form,
+  .navbar-collapse span.nav-link {
+    padding: 0.6rem 0.25rem;
+  }
+
+  .navbar-collapse .nav-item + .nav-item {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .navbar-collapse .navbar-nav + .navbar-nav {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+  }
+}
+
 /* Layout surfaces */
 main {
   padding-top: 0.5rem;
@@ -252,6 +284,76 @@ input:-webkit-autofill:focus {
   font-size: 0.9rem;
 }
 
+/* Home / landing page */
+.hero {
+  text-align: center;
+  padding: 3.5rem 1rem 2.5rem;
+}
+
+.hero-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background-color: var(--brand-50);
+  color: var(--brand-600);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  font-size: 2rem;
+}
+
+.hero h1 {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.hero-subtitle {
+  font-size: 1.1rem;
+  color: var(--ink-700);
+  margin-bottom: 0.5rem;
+}
+
+.hero-tagline {
+  color: var(--ink-500);
+  max-width: 560px;
+  margin: 0 auto 1.75rem;
+}
+
+.hero-actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-actions .btn {
+  min-width: 200px;
+}
+
+.hero-register {
+  margin-top: 1.25rem;
+  color: var(--ink-500);
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.25rem;
+  max-width: 960px;
+  margin: 0 auto 2rem;
+}
+
+.feature-card {
+  text-align: center;
+  padding: 1.75rem 1.25rem;
+}
+
+.feature-icon {
+  font-size: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
 /* Long data-entry forms */
 .form-page-wrapper {
   display: flex;
@@ -303,6 +405,10 @@ input:-webkit-autofill:focus {
 }
 
 /* Pagination */
+.pagination {
+  flex-wrap: wrap;
+}
+
 .page-link {
   color: var(--brand-600);
   border-color: #e2e8f0;
@@ -325,4 +431,30 @@ input:-webkit-autofill:focus {
   margin-top: 2rem;
   color: var(--ink-500);
   flex-shrink: 0;
+}
+
+/* Mobile-only refinements - desktop layout above is untouched */
+@media (max-width: 576px) {
+  .auth-card,
+  .form-card .card-body {
+    padding: 1.5rem 1.25rem;
+  }
+
+  .hero {
+    padding: 2.5rem 0.5rem 2rem;
+  }
+
+  .hero h1 {
+    font-size: 1.5rem;
+  }
+
+  .hero-actions .btn,
+  .hero-actions a {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .form-card .row > [class^="col-"] {
+    margin-bottom: 0.25rem;
+  }
 }

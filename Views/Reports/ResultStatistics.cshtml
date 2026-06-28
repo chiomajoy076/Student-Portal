@@ -3,13 +3,20 @@
 @{
     ViewData["Title"] = "Result Statistics";
     Layout = "_AdminLayout";
+    var sessions = AcademicSessions.GetSelectableSessions();
 }
 
 <h2>Result Statistics</h2>
 
 <form method="get" class="row g-2 mb-3">
     <div class="col-md-3">
-        <input type="text" name="session" value="@Model.Session" class="form-control" placeholder="Session e.g. 2024/2025" />
+        <select name="session" class="form-control">
+            <option value="">All Sessions</option>
+            @foreach (var session in sessions)
+            {
+                <option value="@session" selected="@(Model.Session == session ? "selected" : null)">@session</option>
+            }
+        </select>
     </div>
     <div class="col-md-3">
         <select name="semester" class="form-control">
@@ -19,7 +26,13 @@
         </select>
     </div>
     <div class="col-md-3">
-        <input type="text" name="department" value="@Model.Department" class="form-control" placeholder="Filter by department" />
+        <select name="department" class="form-control">
+            <option value="">All Departments</option>
+            @foreach (var dept in Departments.All)
+            {
+                <option value="@dept" selected="@(Model.Department == dept ? "selected" : null)">@dept</option>
+            }
+        </select>
     </div>
     <div class="col-md-3">
         <button type="submit" class="btn btn-primary">Filter</button>
@@ -32,6 +45,7 @@
     <a asp-action="ExportResultStatsExcel" asp-route-session="@Model.Session" asp-route-semester="@Model.Semester" asp-route-department="@Model.Department" class="btn btn-outline-success">Export Excel</a>
 </div>
 
+<div class="table-responsive">
 <table class="table table-striped">
     <thead>
         <tr>
@@ -63,6 +77,7 @@
         }
     </tbody>
 </table>
+</div>
 
 <partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
 {
