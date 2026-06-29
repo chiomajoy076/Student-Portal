@@ -6,71 +6,77 @@
     var roles = ViewBag.StaffRoles as List<string> ?? new List<string>();
 }
 
-<h2>Create Staff Account</h2>
-<p class="text-muted">Creates an Admin, Exam Officer, or Lecturer account directly, already approved and active.</p>
+<div class="form-page-wrapper">
+    <div class="card form-card">
+        <div class="card-body">
+            <h2>Create Staff Account</h2>
+            <p class="text-muted">Creates an Admin, Exam Officer, or Lecturer account directly, already approved and active.</p>
 
-<div asp-validation-summary="All" class="text-danger"></div>
+            <div asp-validation-summary="All" class="text-danger"></div>
 
-<form asp-action="CreateStaff" method="post" class="row g-3">
-    <div class="col-md-6">
-        <label asp-for="Email"></label>
-        <input asp-for="Email" class="form-control" />
-        <span asp-validation-for="Email" class="text-danger"></span>
-    </div>
-    <div class="col-md-6">
-        <label asp-for="Password"></label>
-        <input asp-for="Password" type="password" class="form-control" />
-        <span asp-validation-for="Password" class="text-danger"></span>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="FirstName"></label>
-        <input asp-for="FirstName" class="form-control" />
-        <span asp-validation-for="FirstName" class="text-danger"></span>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="LastName"></label>
-        <input asp-for="LastName" class="form-control" />
-        <span asp-validation-for="LastName" class="text-danger"></span>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="PhoneNumber"></label>
-        <input asp-for="PhoneNumber" class="form-control" />
-        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
-    </div>
-    <div class="col-md-4">
-        <label asp-for="Role"></label>
-        <select asp-for="Role" id="role-select" class="form-control" onchange="toggleLecturerFields()">
-            <option value="">-- Select Role --</option>
-            @foreach (var role in roles)
-            {
-                <option value="@role">@role</option>
-            }
-        </select>
-        <span asp-validation-for="Role" class="text-danger"></span>
-    </div>
-
-    <div class="col-12" id="lecturer-fields" style="display:none">
-        <label>Departments (Lecturer only)</label>
-        <div class="row">
-            @foreach (var dept in Departments.All)
-            {
-                <div class="col-md-3 form-check">
-                    <input type="checkbox" name="Departments" value="@dept" class="form-check-input" id="dept-@dept.Replace(" ", "")" />
-                    <label class="form-check-label" for="dept-@dept.Replace(" ", "")">@dept</label>
+            <form asp-action="CreateStaff" method="post" class="row g-3">
+                <div class="col-md-6 form-group">
+                    <label asp-for="Email"></label>
+                    <input asp-for="Email" class="form-control" />
+                    <span asp-validation-for="Email" class="text-danger"></span>
                 </div>
-            }
-        </div>
-        <div class="form-check mt-2">
-            <input type="checkbox" asp-for="AlsoExamOfficer" class="form-check-input" />
-            <label class="form-check-label" asp-for="AlsoExamOfficer"></label>
-        </div>
-    </div>
+                <div class="col-md-6 form-group">
+                    <label asp-for="Password"></label>
+                    <input asp-for="Password" type="password" class="form-control" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label asp-for="FirstName"></label>
+                    <input asp-for="FirstName" class="form-control" />
+                    <span asp-validation-for="FirstName" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label asp-for="LastName"></label>
+                    <input asp-for="LastName" class="form-control" />
+                    <span asp-validation-for="LastName" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label asp-for="PhoneNumber"></label>
+                    <input asp-for="PhoneNumber" class="form-control" />
+                    <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 form-group">
+                    <label asp-for="Role"></label>
+                    <select asp-for="Role" id="role-select" class="form-control" onchange="toggleLecturerFields()">
+                        <option value="">-- Select Role --</option>
+                        @foreach (var role in roles)
+                        {
+                            <option value="@role">@role</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Role" class="text-danger"></span>
+                </div>
 
-    <div class="col-12">
-        <button type="submit" class="btn btn-primary mt-2">Create Account</button>
-        <a asp-action="Users" class="btn btn-secondary mt-2">Cancel</a>
+                <div class="col-12" id="lecturer-fields" style="display:none">
+                    <label>Departments (Lecturer only)</label>
+                    <div class="row">
+                        @foreach (var dept in Departments.All)
+                        {
+                            <div class="col-md-3 form-check">
+                                <input type="checkbox" name="Departments" value="@dept" class="form-check-input" id="dept-@dept.Replace(" ", "")" />
+                                <label class="form-check-label" for="dept-@dept.Replace(" ", "")">@dept</label>
+                            </div>
+                        }
+                    </div>
+                    <div class="form-check mt-2">
+                        <input type="checkbox" asp-for="AlsoExamOfficer" class="form-check-input" />
+                        <label class="form-check-label" asp-for="AlsoExamOfficer"></label>
+                    </div>
+                </div>
+
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary mt-2">Create Account</button>
+                    <a asp-action="Users" class="btn btn-secondary mt-2">Cancel</a>
+                </div>
+            </form>
+        </div>
     </div>
-</form>
+</div>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

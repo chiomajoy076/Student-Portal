@@ -6,8 +6,10 @@ namespace Student_Portal.Services;
 
 public class AdminService : IAdminService
 {
-    private static readonly string[] AssignableRoles = { "Admin", "ExamOfficer", "Lecturer", "Student" };
-    private static readonly string[] StaffRoles = { "Admin", "ExamOfficer", "Lecturer" };
+    // ExamOfficer is no longer a standalone assignable role - it's only granted as an add-on to Lecturer
+    // (see EditStaffViewModel.AlsoExamOfficer / CreateStaffViewModel.AlsoExamOfficer).
+    private static readonly string[] AssignableRoles = { "Admin", "Lecturer", "Student" };
+    private static readonly string[] StaffRoles = { "Admin", "Lecturer" };
 
     private readonly IUserRepository _userRepository;
     private readonly IStudentRepository _studentRepository;
@@ -25,7 +27,7 @@ public class AdminService : IAdminService
         _lecturerService = lecturerService;
     }
 
-    public async Task<IEnumerable<StudentListViewModel>> GetStudentListAsync(string? search = null, string? status = null)
+    public async Task<PagedResult<StudentListViewModel>> GetStudentListAsync(string? search = null, string? status = null, int page = 1, int pageSize = 20)
     {
         var students = await _userRepository.GetUsersInRoleAsync("Student");
         var forms = await _studentRepository.GetAllAsync();
@@ -63,7 +65,16 @@ public class AdminService : IAdminService
             list = list.Where(s => !s.IsActive);
         }
 
-        return list.ToList();
+        var materialized = list.ToList();
+        if (page < 1) page = 1;
+
+        return new PagedResult<StudentListViewModel>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = materialized.Count,
+            Items = materialized.Skip((page - 1) * pageSize).Take(pageSize).ToList()
+        };
     }
 
     public async Task<StudentDetailsViewModel?> GetStudentDetailsAsync(string id)
@@ -226,12 +237,15 @@ public class AdminService : IAdminService
         return ServiceResult.Fail(result.Errors.Select(e => e.Description));
     }
 
-    public async Task<List<UserAccountViewModel>> GetAllUsersAsync()
+    public async Task<PagedResult<UserAccountViewModel>> GetAllUsersAsync(int page = 1, int pageSize = 20)
     {
-        var users = await _userRepository.GetAllUsersAsync();
+        var allUsers = await _userRepository.GetAllUsersAsync();
+        if (page < 1) page = 1;
+
+        var pageUsers = allUsers.Skip((page - 1) * pageSize).Take(pageSize).ToList();
         var result = new List<UserAccountViewModel>();
 
-        foreach (var user in users)
+        foreach (var user in pageUsers)
         {
             var roles = await _userRepository.GetRolesAsync(user);
             var isLecturer = roles.Contains("Lecturer");
@@ -250,7 +264,13 @@ public class AdminService : IAdminService
             });
         }
 
-        return result;
+        return new PagedResult<UserAccountViewModel>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = allUsers.Count,
+            Items = result
+        };
     }
 
     public Task<List<string>> GetAssignableRolesAsync() => Task.FromResult(AssignableRoles.ToList());
@@ -320,7 +340,8 @@ public class AdminService : IAdminService
             LastName = model.LastName,
             PhoneNumber = model.PhoneNumber,
             IsActive = true,
-            EmailConfirmed = true
+            EmailConfirmed = true,
+            MustChangePassword = true
         };
 
         var result = await _userRepository.CreateAsync(user, model.Password);
@@ -346,31 +367,69 @@ public class AdminService : IAdminService
         return ServiceResult.Success();
     }
 
-    public Task<List<string>> GetDepartmentsForLecturerAsync(string id) => _lecturerService.GetDepartmentsAsync(id);
-
-    public async Task<ServiceResult> SetLecturerDepartmentsAsync(string id, List<string> departments)
+    public async Task<EditStaffViewModel?> GetEditStaffAsync(string id)
     {
         var user = await _userRepository.FindByIdAsync(id);
+        if (user == null)
+        {
+            return null;
+        }
+
+        var roles = await _userRepository.GetRolesAsync(user);
+        if (roles.Contains("SuperAdmin") || roles.Contains("Student"))
+        {
+            return null;
+        }
+
+        var isLecturer = roles.Contains("Lecturer");
+
+        return new EditStaffViewModel
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            PhoneNumber = user.PhoneNumber,
+            CurrentRole = roles.FirstOrDefault() ?? "",
+            IsLecturer = isLecturer,
+            AlsoExamOfficer = roles.Contains("ExamOfficer"),
+            Departments = isLecturer ? await _lecturerService.GetDepartmentsAsync(id) : new List<string>()
+        };
+    }
+
+    public async Task<ServiceResult> UpdateStaffAsync(EditStaffViewModel model)
+    {
+        var user = await _userRepository.FindByIdAsync(model.Id);
         if (user == null)
         {
             return ServiceResult.Fail("Account not found.");
         }
 
         var roles = await _userRepository.GetRolesAsync(user);
-        if (!roles.Contains("Lecturer"))
+        if (roles.Contains("SuperAdmin"))
         {
-            return ServiceResult.Fail("Only Lecturer accounts can have departments assigned.");
+            return ServiceResult.Fail("Cannot edit a Super Admin account.");
         }
 
-        if (departments.Count == 0)
+        var isLecturer = roles.Contains("Lecturer");
+        if (isLecturer && (model.Departments == null || model.Departments.Count == 0))
         {
-            return ServiceResult.Fail("Select at least one department.");
+            return ServiceResult.Fail("Select at least one department for a Lecturer account.");
         }
 
-        await _lecturerService.SetDepartmentsAsync(id, departments);
+        user.FirstName = model.FirstName;
+        user.LastName = model.LastName;
+        user.PhoneNumber = model.PhoneNumber;
+        await _userRepository.UpdateAsync(user);
+
+        if (isLecturer)
+        {
+            await _lecturerService.SetDepartmentsAsync(model.Id, model.Departments!);
+            await _lecturerService.SetExamOfficerAsync(model.Id, model.AlsoExamOfficer);
+        }
+
+        await _auditService.LogAsync(model.Id, "Staff account edited by SuperAdmin");
+
         return ServiceResult.Success();
     }
-
-    public Task<ServiceResult> SetExamOfficerForLecturerAsync(string id, bool enabled) =>
-        _lecturerService.SetExamOfficerAsync(id, enabled);
 }

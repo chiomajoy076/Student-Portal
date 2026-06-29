@@ -11,6 +11,12 @@ public class ApplicationUser : IdentityUser
     public bool IsActive { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public string? ProfileImage { get; set; } // Base64 image
+
+    /// <summary>
+    /// Set when a SuperAdmin creates a staff account with a temporary password.
+    /// The user is forced through the reset-password flow on first login before gaining access.
+    /// </summary>
+    public bool MustChangePassword { get; set; }
 }
 
 public enum Gender

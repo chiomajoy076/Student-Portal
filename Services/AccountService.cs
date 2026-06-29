@@ -53,13 +53,13 @@ public class AccountService : IAccountService
         return ServiceResult.Success();
     }
 
-    public async Task<ServiceResult> LoginAdminAsync(LoginViewModel model)
+    public async Task<LoginResult> LoginAdminAsync(LoginViewModel model)
     {
         var user = await _userRepository.FindByEmailAsync(model.Email);
         if (user == null)
         {
             await _auditService.LogAsync(null, $"Failed admin login attempt for unknown email '{model.Email}'");
-            return ServiceResult.Fail("Invalid login attempt.");
+            return LoginResult.Fail("Invalid login attempt.");
         }
 
         var isAdmin = await _userRepository.IsInRoleAsync(user, "Admin");
@@ -70,7 +70,7 @@ public class AccountService : IAccountService
         if (!isAdmin && !isSuperAdmin && !isExamOfficer && !isLecturer)
         {
             await _auditService.LogAsync(user.Id, "Attempted admin login without admin role");
-            return ServiceResult.Fail("You are not authorized to access admin area.");
+            return LoginResult.Fail("You are not authorized to access admin area.");
         }
 
         var signInResult = await _signInManager.PasswordSignInAsync(model.Email, model.Password,
@@ -78,18 +78,26 @@ public class AccountService : IAccountService
 
         if (signInResult.Succeeded)
         {
+            if (user.MustChangePassword)
+            {
+                await _signInManager.SignOutAsync();
+                var token = await _userRepository.GeneratePasswordResetTokenAsync(user);
+                await _auditService.LogAsync(user.Id, "Admin login succeeded but a password change is required before access is granted");
+                return LoginResult.RequirePasswordChange(user.Email!, token);
+            }
+
             await _auditService.LogAsync(user.Id, "Admin login succeeded");
-            return ServiceResult.Success();
+            return LoginResult.Success();
         }
 
         if (signInResult.IsLockedOut)
         {
             await _auditService.LogAsync(user.Id, "Admin account locked out after repeated failed login attempts");
-            return ServiceResult.Fail("This account has been temporarily locked due to multiple failed login attempts. Try again later.");
+            return LoginResult.Fail("This account has been temporarily locked due to multiple failed login attempts. Try again later.");
         }
 
         await _auditService.LogAsync(user.Id, "Failed admin login attempt (wrong password)");
-        return ServiceResult.Fail("Invalid login attempt.");
+        return LoginResult.Fail("Invalid login attempt.");
     }
 
     public async Task<ServiceResult> LoginStudentAsync(LoginViewModel model)
@@ -131,6 +139,55 @@ public class AccountService : IAccountService
 
         await _auditService.LogAsync(user.Id, "Failed student login attempt (wrong password)");
         return ServiceResult.Fail("Invalid login attempt.");
+    }
+
+    public async Task<PasswordResetRequest> ForgotPasswordAsync(string email)
+    {
+        var user = await _userRepository.FindByEmailAsync(email);
+        if (user == null)
+        {
+            await _auditService.LogAsync(null, $"Password reset requested for unknown email '{email}'");
+            return PasswordResetRequest.NotFound();
+        }
+
+        if (await _userRepository.IsInRoleAsync(user, "SuperAdmin"))
+        {
+            await _auditService.LogAsync(user.Id, "Password reset blocked for SuperAdmin account");
+            return PasswordResetRequest.BlockedForSuperAdmin();
+        }
+
+        var token = await _userRepository.GeneratePasswordResetTokenAsync(user);
+        await _auditService.LogAsync(user.Id, "Password reset requested");
+        return PasswordResetRequest.Ready(user.Email!, token);
+    }
+
+    public async Task<ServiceResult> ResetPasswordAsync(ResetPasswordViewModel model)
+    {
+        var user = await _userRepository.FindByEmailAsync(model.Email);
+        if (user == null)
+        {
+            return ServiceResult.Fail("Invalid password reset request.");
+        }
+
+        if (await _userRepository.IsInRoleAsync(user, "SuperAdmin"))
+        {
+            return ServiceResult.Fail("Password reset isn't available for this account.");
+        }
+
+        var result = await _userRepository.ResetPasswordAsync(user, model.Token, model.NewPassword);
+        if (!result.Succeeded)
+        {
+            return ServiceResult.Fail(result.Errors.Select(e => e.Description));
+        }
+
+        if (user.MustChangePassword)
+        {
+            user.MustChangePassword = false;
+            await _userRepository.UpdateAsync(user);
+        }
+
+        await _auditService.LogAsync(user.Id, "Password reset completed");
+        return ServiceResult.Success();
     }
 
     public async Task LogoutAsync()

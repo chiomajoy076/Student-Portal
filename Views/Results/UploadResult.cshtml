@@ -1,43 +1,130 @@
-@model Student_Portal.ViewModels.ResultUploadViewModel
-@using Student_Portal.ViewModels
+@model Student_Portal.ViewModels.BulkResultUploadViewModel
 @{
     ViewData["Title"] = "Upload Result";
     Layout = "_AdminLayout";
-    var courses = ViewBag.Courses as List<CourseViewModel> ?? new List<CourseViewModel>();
 }
 
 <h2>Upload Result</h2>
+<p class="text-muted">Enter a matric number to load the courses that student is registered for and doesn't yet have a result, then fill in scores for as many of them as you like.</p>
 
-<div asp-validation-summary="All" class="text-danger"></div>
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row g-3 align-items-end mb-3">
+            <div class="col-md-4">
+                <label>Matric Number</label>
+                <input type="text" id="matric-input" class="form-control" placeholder="e.g. FUNAI/2026/0001" />
+            </div>
+            <div class="col-md-3">
+                <button type="button" id="find-courses-btn" class="btn btn-outline-primary">Find Registered Courses</button>
+            </div>
+        </div>
 
-<form asp-action="UploadResult" method="post" class="row g-3">
-    <div class="col-md-4">
-        <label asp-for="MatricNumber"></label>
-        <input asp-for="MatricNumber" class="form-control" />
-        <span asp-validation-for="MatricNumber" class="text-danger"></span>
+        <div id="lookup-message"></div>
+
+        <form asp-action="UploadResult" method="post" id="upload-result-form" class="d-none">
+            <input type="hidden" name="MatricNumber" id="matric-hidden" />
+            <div class="table-responsive">
+            <table class="table table-sm mb-3">
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Session / Semester</th>
+                        <th style="width: 15%">Score (0-100)</th>
+                    </tr>
+                </thead>
+                <tbody id="course-rows-body"></tbody>
+            </table>
+            </div>
+            <button type="submit" class="btn btn-primary">Save Result(s)</button>
+            <a asp-action="ImportResults" class="btn btn-secondary">Bulk Import (CSV)</a>
+        </form>
+
+        @if (!((Model.Rows?.Count ?? 0) > 0))
+        {
+            <a asp-action="ImportResults" class="btn btn-secondary" id="csv-fallback-link">Bulk Import (CSV)</a>
+        }
     </div>
-    <div class="col-md-4">
-        <label asp-for="CourseId">Course</label>
-        <select asp-for="CourseId" class="form-control">
-            <option value="">-- Select Course --</option>
-            @foreach (var course in courses)
-            {
-                <option value="@course.Id">@course.CourseCode - @course.CourseTitle (@course.Session, @course.Semester)</option>
-            }
-        </select>
-        <span asp-validation-for="CourseId" class="text-danger"></span>
-    </div>
-    <div class="col-md-2">
-        <label asp-for="Score"></label>
-        <input asp-for="Score" type="number" class="form-control" />
-        <span asp-validation-for="Score" class="text-danger"></span>
-    </div>
-    <div class="col-12">
-        <button type="submit" class="btn btn-primary mt-2">Upload Result</button>
-        <a asp-action="ImportResults" class="btn btn-secondary mt-2">Bulk Import (CSV)</a>
-    </div>
-</form>
+</div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var findBtn = document.getElementById('find-courses-btn');
+            var matricInput = document.getElementById('matric-input');
+            var matricHidden = document.getElementById('matric-hidden');
+            var messageBox = document.getElementById('lookup-message');
+            var form = document.getElementById('upload-result-form');
+            var rowsBody = document.getElementById('course-rows-body');
+            var csvFallback = document.getElementById('csv-fallback-link');
+
+            function showMessage(text, type) {
+                messageBox.innerHTML = '<div class="alert alert-' + type + '">' + text + '</div>';
+            }
+
+            findBtn.addEventListener('click', function () {
+                var matric = matricInput.value.trim();
+                messageBox.innerHTML = '';
+                form.classList.add('d-none');
+                rowsBody.innerHTML = '';
+
+                if (!matric) {
+                    showMessage('Enter a matric number first.', 'warning');
+                    return;
+                }
+
+                fetch('@Url.Action("GetFillableCourses")?matricNumber=' + encodeURIComponent(matric))
+                    .then(function (res) { return res.json(); })
+                    .then(function (data) {
+                        if (!data.found) {
+                            showMessage(data.error, 'danger');
+                            return;
+                        }
+
+                        if (!data.courses || data.courses.length === 0) {
+                            showMessage(data.error || 'No registered courses awaiting results.', 'info');
+                            return;
+                        }
+
+                        matricHidden.value = matric;
+
+                        data.courses.forEach(function (course, index) {
+                            var row = document.createElement('tr');
+                            row.innerHTML =
+                                '<td>' + course.courseCode + ' - ' + course.courseTitle + ' (' + course.creditUnit + ' units)' +
+                                '<input type="hidden" name="Rows[' + index + '].CourseId" value="' + course.courseId + '" /></td>' +
+                                '<td>' + course.session + ', ' + course.semester + ' Semester</td>' +
+                                '<td><input type="number" min="0" max="100" class="form-control score-input" name="Rows[' + index + '].Score" /></td>';
+                            rowsBody.appendChild(row);
+                        });
+
+                        form.classList.remove('d-none');
+                        if (csvFallback) {
+                            csvFallback.classList.add('d-none');
+                        }
+                    })
+                    .catch(function () {
+                        showMessage('Something went wrong looking up that student. Please try again.', 'danger');
+                    });
+            });
+
+            form.addEventListener('submit', function () {
+                var rows = Array.from(rowsBody.querySelectorAll('tr'));
+                var keepIndex = 0;
+
+                rows.forEach(function (row) {
+                    var scoreInput = row.querySelector('.score-input');
+                    var hiddenCourseId = row.querySelector('input[type=hidden]');
+
+                    if (!scoreInput.value.trim()) {
+                        row.remove();
+                        return;
+                    }
+
+                    hiddenCourseId.name = 'Rows[' + keepIndex + '].CourseId';
+                    scoreInput.name = 'Rows[' + keepIndex + '].Score';
+                    keepIndex++;
+                });
+            });
+        })();
+    </script>
 }

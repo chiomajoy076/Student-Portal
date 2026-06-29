@@ -93,7 +93,7 @@ public class LecturerService : ILecturerService
         return new List<string>();
     }
 
-    public async Task<List<CourseRosterViewModel>> GetCourseRosterAsync(List<string>? allowedDepartments)
+    public async Task<PagedResult<CourseRosterViewModel>> GetCourseRosterAsync(List<string>? allowedDepartments, int page = 1, int pageSize = 10)
     {
         var courses = await _courseRepository.GetAllAsync();
         if (allowedDepartments != null)
@@ -103,13 +103,19 @@ public class LecturerService : ILecturerService
                 .ToList();
         }
 
-        var courseIds = courses.Select(c => c.Id).ToList();
+        var orderedCourses = courses
+            .OrderBy(c => c.Department)
+            .ThenBy(c => c.CourseCode)
+            .ToList();
+
+        if (page < 1) page = 1;
+        var pageCourses = orderedCourses.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+
+        var courseIds = pageCourses.Select(c => c.Id).ToList();
         var registrations = await _courseRegistrationRepository.GetByCourseIdsAsync(courseIds);
         var forms = await _studentRepository.GetAllAsync();
 
-        return courses
-            .OrderBy(c => c.Department)
-            .ThenBy(c => c.CourseCode)
+        var items = pageCourses
             .Select(c => new CourseRosterViewModel
             {
                 CourseId = c.Id,
@@ -129,5 +135,13 @@ public class LecturerService : ILecturerService
                     .ToList()
             })
             .ToList();
+
+        return new PagedResult<CourseRosterViewModel>
+        {
+            Page = page,
+            PageSize = pageSize,
+            TotalCount = orderedCourses.Count,
+            Items = items
+        };
     }
 }

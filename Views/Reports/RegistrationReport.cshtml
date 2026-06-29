@@ -29,6 +29,7 @@
     }
 </div>
 
+<div class="table-responsive">
 <table class="table table-striped">
     <thead>
         <tr>
@@ -41,7 +42,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var row in Model.Rows)
+        @foreach (var row in Model.PagedRows)
         {
             <tr>
                 <td>@row.MatricNumber</td>
@@ -54,3 +55,12 @@
         }
     </tbody>
 </table>
+</div>
+
+<partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
+{
+    Page = Model.Page,
+    TotalPages = Model.TotalPages,
+    Action = "RegistrationReport",
+    RouteValues = new Dictionary<string, string> { ["department"] = Model.DepartmentFilter ?? "" }
+})" />

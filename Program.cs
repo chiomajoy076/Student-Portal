@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using QuestPDF.Infrastructure;
@@ -12,6 +13,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// Use in-memory data protection keys so auth cookies are invalidated whenever the app restarts,
+// instead of silently resuming a previous login session.
+builder.Services.AddDataProtection()
+    .UseEphemeralDataProtectionProvider();
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -35,8 +41,8 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 
 builder.Services.ConfigureApplicationCookie(options =>
 {
-    // Session timeout: auto sign-out after 30 minutes of inactivity.
-    options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+    // Session timeout: auto sign-out after 10 minutes of inactivity.
+    options.ExpireTimeSpan = TimeSpan.FromMinutes(10);
     options.SlidingExpiration = true;
     options.AccessDeniedPath = "/Home/AccessDenied";
 });
@@ -124,6 +130,16 @@ using (var scope = app.Services.CreateScope())
         if (result.Succeeded)
         {
             await userManager.AddToRoleAsync(superAdmin, "SuperAdmin");
+        }
+    }
+
+    // ExamOfficer is no longer a standalone role - it's only granted as an add-on to Lecturer.
+    // Backfill any account that ended up with ExamOfficer but not Lecturer (idempotent, safe to run every startup).
+    foreach (var user in await userManager.GetUsersInRoleAsync("ExamOfficer"))
+    {
+        if (!await userManager.IsInRoleAsync(user, "Lecturer"))
+        {
+            await userManager.AddToRoleAsync(user, "Lecturer");
         }
     }
 }

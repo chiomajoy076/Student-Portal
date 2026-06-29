@@ -1,4 +1,4 @@
-@model List<Student_Portal.ViewModels.CourseViewModel>
+@model Student_Portal.ViewModels.PagedResult<Student_Portal.ViewModels.CourseViewModel>
 @using Student_Portal.Models
 @{
     ViewData["Title"] = "Courses";
@@ -9,65 +9,132 @@
 }
 
 <h2>Courses</h2>
+<p class="text-muted">
+    Showing @Model.Items.Count of @Model.TotalCount courses
+    (page @Model.Page of @Math.Max(Model.TotalPages, 1)).
+</p>
 <a asp-action="Roster" class="btn btn-outline-secondary mb-3">View Registered Students</a>
 
 <div class="card mb-4">
     <div class="card-body">
-        <h5 class="card-title">Add Course</h5>
-        <form asp-action="AddCourse" method="post" class="row g-3">
-            <div class="col-md-2">
-                <label>Course Code</label>
-                <input name="CourseCode" class="form-control" required />
-            </div>
-            <div class="col-md-3">
-                <label>Course Title</label>
-                <input name="CourseTitle" class="form-control" required />
-            </div>
-            <div class="col-md-1">
-                <label>Units</label>
-                <input name="CreditUnit" type="number" class="form-control" required />
-            </div>
-            <div class="col-md-2">
-                <label>Semester</label>
-                <select name="Semester" class="form-control" required>
-                    <option value="First">First</option>
-                    <option value="Second">Second</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label>Session</label>
-                <select name="Session" class="form-control" required>
-                    @foreach (var session in sessions)
+        <h5 class="card-title">Add Course(s)</h5>
+        <p class="text-muted">Add one or more courses at once for the same semester, session, department and level.</p>
+        <form asp-action="AddCourse" method="post" id="add-course-form">
+            <div class="row g-3 mb-2">
+                <div class="col-md-3">
+                    <label>Semester</label>
+                    <select name="Semester" class="form-control" required>
+                        <option value="First">First</option>
+                        <option value="Second">Second</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Session</label>
+                    <select name="Session" class="form-control" required>
+                        @foreach (var session in sessions)
+                        {
+                            <option value="@session">@session</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Department</label>
+                    @if (departmentOptions.Count == 1)
                     {
-                        <option value="@session">@session</option>
+                        <input class="form-control" value="@departmentOptions[0]" readonly disabled />
+                        <input type="hidden" name="Department" value="@departmentOptions[0]" />
                     }
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label>Department</label>
-                <select name="Department" class="form-control" required>
-                    @foreach (var dept in departmentOptions)
+                    else
                     {
-                        <option value="@dept">@dept</option>
+                        <select name="Department" class="form-control" required>
+                            @foreach (var dept in departmentOptions)
+                            {
+                                <option value="@dept">@dept</option>
+                            }
+                        </select>
                     }
-                </select>
+                </div>
+                <div class="col-md-3">
+                    <label>Level</label>
+                    <select name="Level" class="form-control" required>
+                        <option value="100">100 Level</option>
+                        <option value="200">200 Level</option>
+                        <option value="300">300 Level</option>
+                        <option value="400">400 Level</option>
+                    </select>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label>Level</label>
-                <select name="Level" class="form-control" required>
-                    <option value="100">100 Level</option>
-                    <option value="200">200 Level</option>
-                    <option value="300">300 Level</option>
-                    <option value="400">400 Level</option>
-                </select>
+
+            <div class="table-responsive">
+            <table class="table table-sm mb-2" id="course-rows-table">
+                <thead>
+                    <tr>
+                        <th style="width: 20%">Course Code</th>
+                        <th style="width: 45%">Course Title</th>
+                        <th style="width: 15%">Units</th>
+                        <th style="width: 5%"></th>
+                    </tr>
+                </thead>
+                <tbody id="course-rows-body">
+                    <tr class="course-row">
+                        <td><input name="Rows[0].CourseCode" class="form-control" required /></td>
+                        <td><input name="Rows[0].CourseTitle" class="form-control" required /></td>
+                        <td><input name="Rows[0].CreditUnit" type="number" min="1" max="10" class="form-control" required /></td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-danger remove-row" title="Remove row">&times;</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
             </div>
-            <div class="col-12">
-                <button type="submit" class="btn btn-primary mt-2">Add Course</button>
+
+            <button type="button" id="add-row-btn" class="btn btn-sm btn-outline-secondary mb-3">+ Add Another Course</button>
+            <div>
+                <button type="submit" class="btn btn-primary">Save Course(s)</button>
             </div>
         </form>
     </div>
 </div>
 
+@section Scripts {
+    <script>
+        (function () {
+            var rowsBody = document.getElementById('course-rows-body');
+            var addRowBtn = document.getElementById('add-row-btn');
+
+            function reindexRows() {
+                var rows = rowsBody.querySelectorAll('.course-row');
+                rows.forEach(function (row, index) {
+                    row.querySelectorAll('input').forEach(function (input) {
+                        input.name = input.name.replace(/Rows\[\d+\]/, 'Rows[' + index + ']');
+                    });
+                });
+            }
+
+            addRowBtn.addEventListener('click', function () {
+                var firstRow = rowsBody.querySelector('.course-row');
+                var newRow = firstRow.cloneNode(true);
+                newRow.querySelectorAll('input').forEach(function (input) {
+                    input.value = '';
+                });
+                rowsBody.appendChild(newRow);
+                reindexRows();
+            });
+
+            rowsBody.addEventListener('click', function (e) {
+                if (e.target.classList.contains('remove-row')) {
+                    var rows = rowsBody.querySelectorAll('.course-row');
+                    if (rows.length > 1) {
+                        e.target.closest('.course-row').remove();
+                        reindexRows();
+                    }
+                }
+            });
+        })();
+    </script>
+}
+
+<div class="table-responsive">
 <table class="table table-striped">
     <thead>
         <tr>
@@ -85,7 +152,7 @@
         </tr>
     </thead>
     <tbody>
-        @foreach (var course in Model)
+        @foreach (var course in Model.Items)
         {
             <tr>
                 <td>@course.CourseCode</td>
@@ -105,3 +172,11 @@
         }
     </tbody>
 </table>
+</div>
+
+<partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
+{
+    Page = Model.Page,
+    TotalPages = Model.TotalPages,
+    Action = "Courses"
+})" />

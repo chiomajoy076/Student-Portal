@@ -3,90 +3,108 @@
     ViewData["Title"] = "My Form Status";
 }
 
-<div class="container">
-    <h2>My Form Status</h2>
-    <a asp-action="CheckResult" class="btn btn-outline-primary mb-3">Check Result</a>
-    <a asp-action="MyCourses" class="btn btn-outline-secondary mb-3">My Courses</a>
+<div class="form-page-wrapper">
+    <div class="card form-card">
+        <div class="card-body">
+            <h2>My Form Status</h2>
+            <div class="mb-3">
+                <a asp-action="CheckResult" class="btn btn-outline-primary">Check Result</a>
+                <a asp-action="MyCourses" class="btn btn-outline-secondary">My Courses</a>
+            </div>
 
-    @if (Model.IsSubmitted)
-    {
-        <div class="alert alert-success">
-            <h4>Form Submitted Successfully</h4>
-            <p>Submitted on: @Model.SubmittedAt?.ToString("MMMM dd, yyyy HH:mm")</p>
-            <a asp-action="DownloadRegistrationSlip" class="btn btn-sm btn-success">Download Registration Slip</a>
-        </div>
+            @if (Model.IsSubmitted)
+            {
+                <div class="alert alert-success">
+                    <h4>Form Submitted Successfully</h4>
+                    <p>Submitted on: @Model.SubmittedAt?.ToString("MMMM dd, yyyy HH:mm")</p>
+                    <a asp-action="DownloadRegistrationSlip" class="btn btn-sm btn-success">Download Registration Slip</a>
+                </div>
 
-        <div class="card mt-4">
-            <div class="card-body">
-                <h5 class="card-title">Form Details</h5>
-                <dl class="row">
-                    <dt class="col-sm-3">Matric Number</dt>
-                    <dd class="col-sm-9">@Model.MatricNumber</dd>
-
-                    <dt class="col-sm-3">Department</dt>
-                    <dd class="col-sm-9">@Model.Department</dd>
-
-                    <dt class="col-sm-3">Level</dt>
-                    <dd class="col-sm-9">@Model.Level</dd>
-
-                    <dt class="col-sm-3">Jamb Registration Number</dt>
-                    <dd class="col-sm-9">@Model.JambRegNumber</dd>
-
-                    <dt class="col-sm-3">WAEC Registration Number</dt>
-                    <dd class="col-sm-9">@Model.WAECRegNumber</dd>
-
-                    <dt class="col-sm-3">Mode of Entry</dt>
-                    <dd class="col-sm-9">@Model.ModeOfEntry</dd>
-
-                    <dt class="col-sm-3">Jamb Score</dt>
-                    <dd class="col-sm-9">@Model.JambScore</dd>
-
-                    <dt class="col-sm-3">Post Utme Score</dt>
-                    <dd class="col-sm-9">@Model.PostUtmeScore</dd>
-
-                    <dt class="col-sm-3">Marital Status</dt>
-                    <dd class="col-sm-9">@Model.MaritalStatus</dd>
-
-                    <dt class="col-sm-3">Date of Birth</dt>
-                    <dd class="col-sm-9">@Model.DateOfBirth</dd>
-
-                    <dt class="col-sm-3">Nationality</dt>
-                    <dd class="col-sm-9">@Model.Nationality</dd>
-
-                    <dt class="col-sm-3">State</dt>
-                    <dd class="col-sm-9">@Model.State</dd>
-
-                    <dt class="col-sm-3">Local Government Area</dt>
-                    <dd class="col-sm-9">@Model.LocalGov</dd>
-
-                    <dt class="col-sm-3">Next of Kin</dt>
-                    <dd class="col-sm-9">@Model.NextOfKin</dd>
-
-                    <dt class="col-sm-3">Next of Kin Phone Number</dt>
-                    <dd class="col-sm-9">@Model.NextOfKinPhoneNumber</dd>
-
-                    @if (!string.IsNullOrEmpty(Model.DocumentUrl))
-                    {
-                        <dt class="col-sm-3">Uploaded Document</dt>
-                        <dd class="col-sm-9">
+                <h5 class="form-section-title">Form Details</h5>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Matric Number</div>
+                    <div class="col-sm-8">@(Model.MatricNumber ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Department</div>
+                    <div class="col-sm-8">@(Model.Department ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Level</div>
+                    <div class="col-sm-8">@(Model.Level ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Jamb Registration Number</div>
+                    <div class="col-sm-8">@(Model.JambRegNumber ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">WAEC Registration Number</div>
+                    <div class="col-sm-8">@(Model.WAECRegNumber ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Mode of Entry</div>
+                    <div class="col-sm-8">@(Model.ModeOfEntry?.ToString() ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Jamb Score</div>
+                    <div class="col-sm-8">@Model.JambScore</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Post Utme Score</div>
+                    <div class="col-sm-8">@Model.PostUtmeScore</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Marital Status</div>
+                    <div class="col-sm-8">@(Model.MaritalStatus?.ToString() ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Date of Birth</div>
+                    <div class="col-sm-8">@Model.DateOfBirth.ToString("MMMM dd, yyyy")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Nationality</div>
+                    <div class="col-sm-8">@(string.IsNullOrWhiteSpace(Model.Nationality) ? "-" : Model.Nationality)</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">State</div>
+                    <div class="col-sm-8">@(Model.State ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Local Government Area</div>
+                    <div class="col-sm-8">@(Model.LocalGov ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Next of Kin</div>
+                    <div class="col-sm-8">@(Model.NextOfKin ?? "-")</div>
+                </div>
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Next of Kin Phone Number</div>
+                    <div class="col-sm-8">@(Model.NextOfKinPhoneNumber ?? "-")</div>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.DocumentUrl))
+                {
+                    <div class="row form-details-row">
+                        <div class="col-sm-4 form-details-label">Uploaded Document</div>
+                        <div class="col-sm-8">
                             <a href="@Model.DocumentUrl" target="_blank" class="btn btn-sm btn-primary">
                                 View Document (@Model.DocumentFileName)
                             </a>
-                        </dd>
-                    }
-
-                    <dt class="col-sm-3">Last Updated</dt>
-                    <dd class="col-sm-9">@Model.LastUpdated.ToString("MMMM dd, yyyy HH:mm")</dd>
-                </dl>
-            </div>
+                        </div>
+                    </div>
+                }
+                <div class="row form-details-row">
+                    <div class="col-sm-4 form-details-label">Last Updated</div>
+                    <div class="col-sm-8">@Model.LastUpdated.ToString("MMMM dd, yyyy HH:mm")</div>
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-info">
+                    <h4>Form in Progress</h4>
+                    <p>Last saved: @Model.LastUpdated.ToString("MMMM dd, yyyy HH:mm")</p>
+                    <a asp-action="Form" class="btn btn-primary">Continue Editing</a>
+                </div>
+            }
         </div>
-    }
-    else
-    {
-        <div class="alert alert-info">
-            <h4>Form in Progress</h4>
-            <p>Last saved: @Model.LastUpdated.ToString("MMMM dd, yyyy HH:mm")</p>
-            <a asp-action="Form" class="btn btn-primary">Continue Editing</a>
-        </div>
-    }
+    </div>
 </div>

@@ -62,6 +62,12 @@ public class AccountController : Controller
                 return RedirectToAction("Index", "Home");
             }
 
+            if (result.RequiresPasswordChange)
+            {
+                TempData["Success"] = "Your account was just created by an administrator. Please set your own password before continuing.";
+                return RedirectToAction("ResetPassword", new { email = result.Email, token = result.ResetToken, context = "admin", forced = true });
+            }
+
             foreach (var error in result.Errors)
             {
                 ModelState.AddModelError(string.Empty, error);
@@ -112,5 +118,100 @@ public class AccountController : Controller
     {
         await _accountService.LogoutAsync();
         return RedirectToAction("Index", "Home");
+    }
+
+    [HttpGet]
+    public IActionResult ForgotPassword()
+    {
+        ViewBag.Context = "student";
+        return View(new ForgotPasswordViewModel());
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordViewModel model)
+    {
+        ViewBag.Context = "student";
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var request = await _accountService.ForgotPasswordAsync(model.Email);
+        if (!request.Found || request.Blocked)
+        {
+            ModelState.AddModelError(string.Empty, request.Error!);
+            return View(model);
+        }
+
+        return RedirectToAction("ResetPassword", new { email = request.Email, token = request.Token, context = "student" });
+    }
+
+    [HttpGet]
+    public IActionResult AdminForgotPassword()
+    {
+        ViewBag.Context = "admin";
+        return View("ForgotPassword", new ForgotPasswordViewModel());
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> AdminForgotPassword(ForgotPasswordViewModel model)
+    {
+        ViewBag.Context = "admin";
+        if (!ModelState.IsValid)
+        {
+            return View("ForgotPassword", model);
+        }
+
+        var request = await _accountService.ForgotPasswordAsync(model.Email);
+        if (!request.Found || request.Blocked)
+        {
+            ModelState.AddModelError(string.Empty, request.Error!);
+            return View("ForgotPassword", model);
+        }
+
+        return RedirectToAction("ResetPassword", new { email = request.Email, token = request.Token, context = "admin" });
+    }
+
+    [HttpGet]
+    public IActionResult ResetPassword(string email, string token, string context = "student", bool forced = false)
+    {
+        if (string.IsNullOrEmpty(email) || string.IsNullOrEmpty(token))
+        {
+            return RedirectToAction(context == "admin" ? "AdminForgotPassword" : "ForgotPassword");
+        }
+
+        ViewBag.Forced = forced;
+        ViewBag.Context = context == "admin" ? "admin" : "student";
+        return View(new ResetPasswordViewModel { Email = email, Token = token, Context = context == "admin" ? "admin" : "student" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> ResetPassword(ResetPasswordViewModel model)
+    {
+        ViewBag.Context = model.Context == "admin" ? "admin" : "student";
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var result = await _accountService.ResetPasswordAsync(model);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors)
+            {
+                ModelState.AddModelError(string.Empty, error);
+            }
+
+            return View(model);
+        }
+
+        return RedirectToAction("ResetPasswordConfirmation", new { context = model.Context });
+    }
+
+    [HttpGet]
+    public IActionResult ResetPasswordConfirmation(string context = "student")
+    {
+        ViewBag.Context = context == "admin" ? "admin" : "student";
+        return View();
     }
 }

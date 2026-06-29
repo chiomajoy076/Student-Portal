@@ -1,17 +1,21 @@
-@model List<Student_Portal.ViewModels.CourseRosterViewModel>
+@model Student_Portal.ViewModels.PagedResult<Student_Portal.ViewModels.CourseRosterViewModel>
 @{
     ViewData["Title"] = "Registered Students";
     Layout = "_AdminLayout";
 }
 
 <h2>Registered Students</h2>
+<p class="text-muted">
+    Showing @Model.Items.Count of @Model.TotalCount courses
+    (page @Model.Page of @Math.Max(Model.TotalPages, 1)).
+</p>
 
-@if (!Model.Any())
+@if (!Model.Items.Any())
 {
     <div class="alert alert-info">No courses found.</div>
 }
 
-@foreach (var course in Model)
+@foreach (var course in Model.Items)
 {
     <div class="card mb-3">
         <div class="card-header">
@@ -25,6 +29,7 @@
             }
             else
             {
+                <div class="table-responsive">
                 <table class="table table-sm mb-0">
                     <thead>
                         <tr>
@@ -44,7 +49,15 @@
                         }
                     </tbody>
                 </table>
+                </div>
             }
         </div>
     </div>
 }
+
+<partial name="_Pagination" model="@(new Student_Portal.ViewModels.PaginationViewModel
+{
+    Page = Model.Page,
+    TotalPages = Model.TotalPages,
+    Action = "Roster"
+})" />

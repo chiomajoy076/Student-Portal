@@ -6,4 +6,5 @@ public interface IAuditService
 {
     Task LogAsync(string? userId, string action);
     Task<List<AuditLogViewModel>> GetRecentAsync(int count = 100);
+    Task<PagedAuditLogViewModel> GetPagedAsync(int page, int pageSize = 20, string? emailFilter = null);
 }

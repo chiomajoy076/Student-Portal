@@ -20,9 +20,9 @@ public class AdminController : Controller
         _courseRegistrationService = courseRegistrationService;
     }
 
-    public async Task<IActionResult> Index(string? search, string? status)
+    public async Task<IActionResult> Index(string? search, string? status, int page = 1)
     {
-        var viewModel = await _adminService.GetStudentListAsync(search, status);
+        var viewModel = await _adminService.GetStudentListAsync(search, status, page);
         ViewBag.Search = search;
         ViewBag.Status = status;
         return View(viewModel);
@@ -104,9 +104,9 @@ public class AdminController : Controller
     }
 
     [Authorize(Roles = "SuperAdmin")]
-    public async Task<IActionResult> Users()
+    public async Task<IActionResult> Users(int page = 1)
     {
-        var users = await _adminService.GetAllUsersAsync();
+        var users = await _adminService.GetAllUsersAsync(page);
         ViewBag.AssignableRoles = await _adminService.GetAssignableRolesAsync();
         return View(users);
     }
@@ -124,9 +124,9 @@ public class AdminController : Controller
     }
 
     [Authorize(Roles = "SuperAdmin")]
-    public async Task<IActionResult> AuditLogs()
+    public async Task<IActionResult> AuditLogs(int page = 1, string? email = null)
     {
-        var logs = await _auditService.GetRecentAsync();
+        var logs = await _auditService.GetPagedAsync(page, emailFilter: email);
         return View(logs);
     }
 
@@ -199,34 +199,35 @@ public class AdminController : Controller
 
     [Authorize(Roles = "SuperAdmin")]
     [HttpGet]
-    public async Task<IActionResult> ManageLecturerDepartments(string id)
+    public async Task<IActionResult> EditStaff(string id)
     {
-        var current = await _adminService.GetDepartmentsForLecturerAsync(id);
-        ViewBag.LecturerId = id;
-        ViewBag.CurrentDepartments = current;
-        return View();
+        var model = await _adminService.GetEditStaffAsync(id);
+        if (model == null)
+        {
+            return NotFound();
+        }
+
+        return View(model);
     }
 
     [Authorize(Roles = "SuperAdmin")]
     [HttpPost]
-    public async Task<IActionResult> ManageLecturerDepartments(string id, List<string> departments)
+    public async Task<IActionResult> EditStaff(EditStaffViewModel model)
     {
-        var result = await _adminService.SetLecturerDepartmentsAsync(id, departments ?? new List<string>());
+        if (!ModelState.IsValid)
+        {
+            return View(model);
+        }
+
+        var result = await _adminService.UpdateStaffAsync(model);
         TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-            ? "Lecturer departments updated successfully."
+            ? "Staff account updated successfully."
             : string.Join(" ", result.Errors);
 
-        return RedirectToAction(nameof(Users));
-    }
-
-    [Authorize(Roles = "SuperAdmin")]
-    [HttpPost]
-    public async Task<IActionResult> ToggleExamOfficerForLecturer(string id, bool enabled)
-    {
-        var result = await _adminService.SetExamOfficerForLecturerAsync(id, enabled);
-        TempData[result.Succeeded ? "Success" : "Error"] = result.Succeeded
-            ? "Exam Officer access updated for lecturer."
-            : string.Join(" ", result.Errors);
+        if (!result.Succeeded)
+        {
+            return View(model);
+        }
 
         return RedirectToAction(nameof(Users));
     }

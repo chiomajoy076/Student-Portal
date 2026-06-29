@@ -15,5 +15,5 @@ public interface ILecturerService
     /// </summary>
     Task<List<string>?> GetAccessibleDepartmentsAsync(ClaimsPrincipal principal);
 
-    Task<List<CourseRosterViewModel>> GetCourseRosterAsync(List<string>? allowedDepartments);
+    Task<PagedResult<CourseRosterViewModel>> GetCourseRosterAsync(List<string>? allowedDepartments, int page = 1, int pageSize = 10);
 }

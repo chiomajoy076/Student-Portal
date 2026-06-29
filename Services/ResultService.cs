@@ -79,6 +79,80 @@ public class ResultService : IResultService
         return ServiceResult.Success();
     }
 
+    public async Task<ServiceResult> UploadManyResultsAsync(BulkResultUploadViewModel model, List<string>? allowedDepartments = null)
+    {
+        if (model.Rows.Count == 0)
+        {
+            return ServiceResult.Fail("No course scores were provided.");
+        }
+
+        var errors = new List<string>();
+        var successCount = 0;
+
+        foreach (var row in model.Rows)
+        {
+            var result = await UploadSingleResultAsync(new ResultUploadViewModel
+            {
+                MatricNumber = model.MatricNumber,
+                CourseId = row.CourseId,
+                Score = row.Score
+            }, allowedDepartments);
+
+            if (result.Succeeded)
+            {
+                successCount++;
+            }
+            else
+            {
+                errors.AddRange(result.Errors);
+            }
+        }
+
+        if (successCount == 0 && errors.Count > 0)
+        {
+            return ServiceResult.Fail(errors);
+        }
+
+        if (errors.Count > 0)
+        {
+            return ServiceResult.Fail(new[] { $"{successCount} result(s) uploaded. Some rows failed:" }.Concat(errors));
+        }
+
+        return ServiceResult.Success();
+    }
+
+    public async Task<(bool Found, string? Error, List<RegisteredCourseOptionViewModel> Courses)> GetFillableCoursesAsync(
+        string matricNumber, List<string>? allowedDepartments = null)
+    {
+        var student = await _studentRepository.GetByMatricNumberAsync(matricNumber);
+        if (student == null)
+        {
+            return (false, $"No student found with matric number '{matricNumber}'.", new List<RegisteredCourseOptionViewModel>());
+        }
+
+        var registrations = await _courseRegistrationRepository.GetByUserIdAsync(student.UserId);
+        var existingResults = await _resultRepository.GetByUserIdAsync(student.UserId);
+        var resultedCourseIds = existingResults.Select(r => r.CourseId).ToHashSet();
+
+        var courses = registrations
+            .Where(r => !resultedCourseIds.Contains(r.CourseId))
+            .Where(r => allowedDepartments == null ||
+                        allowedDepartments.Contains(r.Course.Department, StringComparer.OrdinalIgnoreCase))
+            .OrderBy(r => r.Course.CourseCode)
+            .Select(r => new RegisteredCourseOptionViewModel
+            {
+                CourseId = r.Course.Id,
+                CourseCode = r.Course.CourseCode,
+                CourseTitle = r.Course.CourseTitle,
+                CreditUnit = r.Course.CreditUnit,
+                Session = r.Course.Session,
+                Semester = r.Course.Semester.ToString()
+            })
+            .ToList();
+
+        return (true, null, courses);
+    }
+
     public async Task<ResultImportSummaryViewModel> ImportFromCsvAsync(IFormFile file, List<string>? allowedDepartments = null)
     {
         var summary = new ResultImportSummaryViewModel();
